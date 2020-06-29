@@ -1579,7 +1579,7 @@ public class GuiManagerScript : MonoBehaviour
 
         TerrainCell cell = world.GetCell(longitude, latitude);
 
-        if (cell.Altitude <= 0)
+        if (cell.IsBelowSeaLevel)
             return false;
 
         Manager.GenerateHumanGroup(longitude, latitude, population);

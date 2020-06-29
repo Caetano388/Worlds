@@ -2779,7 +2779,7 @@ public class World : ISynchronizable
 
         if ((justAdded || callByBrush) && resetDrainage)
         {
-            if (cell.Altitude > 0)
+            if (!cell.IsBelowSeaLevel)
             {
                 // Rainfall could have been altered after this cell had already been added to the drainageHeap,
                 // so we need to update the cell's water acc accordingly.
@@ -2806,7 +2806,7 @@ public class World : ISynchronizable
             GenerateTerrainBiomes(cell);
             CalculateTerrainArability(cell);
 
-            if (cell.Altitude > 0)
+            if (!cell.IsBelowSeaLevel)
             {
                 //AddToDrainageRegen(cell, callByBrush: true);
                 ResetDrainage(cell, false);
@@ -2847,7 +2847,7 @@ public class World : ISynchronizable
         GenerateTerrainBiomes(cell);
         CalculateTerrainArability(cell);
 
-        if (cell.Altitude > 0)
+        if (!cell.IsBelowSeaLevel)
         {
             //AddToDrainageRegen(cell, callByBrush: true);
             ResetDrainage(cell, false);
@@ -2878,7 +2878,7 @@ public class World : ISynchronizable
         GenerateTerrainBiomes(cell);
         CalculateTerrainArability(cell);
 
-        if (cell.Altitude > 0)
+        if (!cell.IsBelowSeaLevel)
         {
             //AddToDrainageRegen(cell, callByBrush: true);
             ResetDrainage(cell, false);
@@ -3680,7 +3680,7 @@ public class World : ISynchronizable
         {
             cell.RiverId = cell.Latitude * Width + cell.Longitude;
 
-            if (cell.Altitude <= 0)
+            if (cell.IsBelowSeaLevel)
                 continue;
 
             cell.WaterAccumulation = cell.Rainfall;
@@ -3775,7 +3775,7 @@ public class World : ISynchronizable
         if (rainfallTransfer <= 0)
             return 0;
 
-        if (cell.Altitude <= 0)
+        if (cell.IsBelowSeaLevel)
         {
             return Mathf.Max(rainfallTransfer * OceanDispersalFactor, MinOceanDispersal);
         }
