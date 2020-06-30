@@ -35,16 +35,72 @@ public static class BiomeCellRegionBuilder
     private static HashSet<TerrainCell> _borderCells;
     private static int _largestBorderRectArea;
 
-    public static bool CanAddCellToBiomeRegion(TerrainCell cell, string biomeId)
+    private static Dictionary<TerrainCell, bool> _cellsThatMightBeAdded;
+
+    private static bool CouldCellBeAddedToRegion(TerrainCell cell, string biomeId)
     {
-        if (cell.Region != null)
+        if (_cellsThatMightBeAdded.TryGetValue(cell, out bool value)) return value;
+
+        if (cell.Region != null) return false;
+
+        if (cell.IsBelowSeaLevel) return false;
+
+        int minCount = 3;
+        int nCount = 0;
+
+        if (cell.BiomeWithMostPresence != biomeId)
         {
-            return false;
+            // a cell without the biome must have at least 6 neighbors with the biome
+            minCount = 6;
         }
 
-        string cellBiomeId = cell.BiomeWithMostPresence;
+        foreach (TerrainCell nCell in cell.Neighbors.Values)
+        {
+            if (nCell.BiomeWithMostPresence == biomeId)
+            {
+                nCount++;
 
-        return cellBiomeId == biomeId;
+                if (nCount >= minCount)
+                {
+                    _cellsThatMightBeAdded.Add(cell, true);
+                    return true;
+                }
+            }
+        }
+
+        _cellsThatMightBeAdded.Add(cell, false);
+        return false;
+    }
+
+    private static bool CanAddCellToRegion(TerrainCell cell, string biomeId)
+    {
+        if (cell.Region != null) return false;
+
+        if (cell.IsBelowSeaLevel) return false;
+
+        int minCount = 3;
+        int nCount = 0;
+
+        if (cell.BiomeWithMostPresence != biomeId)
+        {
+            // a cell without the biome must have at least 6 neighbors that could
+            minCount = 6;
+        }
+
+        foreach (TerrainCell nCell in cell.Neighbors.Values)
+        {
+            if (CouldCellBeAddedToRegion(nCell, biomeId))
+            {
+                nCount++;
+
+                if (nCount >= minCount)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public class Border
@@ -225,7 +281,7 @@ public static class BiomeCellRegionBuilder
                 Direction d = pair.Key;
                 TerrainCell nCell = pair.Value;
 
-                if (CanAddCellToBiomeRegion(nCell, biomeId))
+                if (CanAddCellToRegion(nCell, biomeId))
                 {
                     inBorderCells.Add(nCell);
                 }
@@ -296,6 +352,7 @@ public static class BiomeCellRegionBuilder
         _borders = new List<Border>();
         _borderCells = new HashSet<TerrainCell>();
         _largestBorderRectArea = 0;
+        _cellsThatMightBeAdded = new Dictionary<TerrainCell, bool>();
 
         while (cellsToExplore.Count > 0)
         {
@@ -308,7 +365,7 @@ public static class BiomeCellRegionBuilder
                     continue;
                 }
 
-                if (CanAddCellToBiomeRegion(nCell, biomeId))
+                if (CanAddCellToRegion(nCell, biomeId))
                 {
                     cellsToExplore.Enqueue(nCell);
                 }
@@ -365,7 +422,8 @@ public static class BiomeCellRegionBuilder
 
     // older versions of
 
-    public static Region TryGenerateRegion_reduced(TerrainCell startCell, Language establishmentLanguage, string biomeId)
+    public static Region TryGenerateRegion_reduced(
+        TerrainCell startCell, Language establishmentLanguage, string biomeId)
     {
         int regionSize = 1;
 
