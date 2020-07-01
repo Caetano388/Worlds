@@ -35,42 +35,7 @@ public static class BiomeCellRegionBuilder
     private static HashSet<TerrainCell> _borderCells;
     private static int _largestBorderRectArea;
 
-    private static Dictionary<TerrainCell, bool> _cellsThatMightBeAdded;
-
-    private static bool CouldCellBeAddedToRegion(TerrainCell cell, string biomeId)
-    {
-        if (_cellsThatMightBeAdded.TryGetValue(cell, out bool value)) return value;
-
-        if (cell.Region != null) return false;
-
-        if (cell.IsBelowSeaLevel) return false;
-
-        int minCount = 3;
-        int nCount = 0;
-
-        if (cell.BiomeWithMostPresence != biomeId)
-        {
-            // a cell without the biome must have at least 6 neighbors with the biome
-            minCount = 6;
-        }
-
-        foreach (TerrainCell nCell in cell.Neighbors.Values)
-        {
-            if (nCell.BiomeWithMostPresence == biomeId)
-            {
-                nCount++;
-
-                if (nCount >= minCount)
-                {
-                    _cellsThatMightBeAdded.Add(cell, true);
-                    return true;
-                }
-            }
-        }
-
-        _cellsThatMightBeAdded.Add(cell, false);
-        return false;
-    }
+    private static HashSet<TerrainCell> _cellsThatCouldBeAdded;
 
     private static bool CanAddCellToRegion(TerrainCell cell, string biomeId)
     {
@@ -78,18 +43,19 @@ public static class BiomeCellRegionBuilder
 
         if (cell.IsBelowSeaLevel) return false;
 
-        int minCount = 3;
+        int minCount = 4;
         int nCount = 0;
 
         if (cell.BiomeWithMostPresence != biomeId)
         {
-            // a cell without the biome must have at least 6 neighbors that could
-            minCount = 6;
+            // a cell without the biome must have at least 5 neighbors that could
+            minCount = 5;
         }
 
         foreach (TerrainCell nCell in cell.Neighbors.Values)
         {
-            if (CouldCellBeAddedToRegion(nCell, biomeId))
+            if ((nCell.BiomeWithMostPresence == biomeId) ||
+                nCell.IsBelowSeaLevel)
             {
                 nCount++;
 
@@ -352,7 +318,6 @@ public static class BiomeCellRegionBuilder
         _borders = new List<Border>();
         _borderCells = new HashSet<TerrainCell>();
         _largestBorderRectArea = 0;
-        _cellsThatMightBeAdded = new Dictionary<TerrainCell, bool>();
 
         while (cellsToExplore.Count > 0)
         {
