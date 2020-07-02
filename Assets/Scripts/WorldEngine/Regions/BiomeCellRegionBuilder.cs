@@ -24,8 +24,8 @@ public static class BiomeCellRegionBuilder
 
     public const float MaxClosedness = 0.5f;
 
-    public const int MaxEnclosedRectArea = 125;
-    public const int MaxEnclosedArea = 25;
+    public const int MaxEnclosedRectArea = 25;
+    public const int MaxEnclosedArea = 16;
 
     private static TerrainCell _startCell;
     private static int _rngOffset;
@@ -43,30 +43,7 @@ public static class BiomeCellRegionBuilder
 
         if (cell.IsBelowSeaLevel) return false;
 
-        int minCount = 4;
-        int nCount = 0;
-
-        if (cell.BiomeWithMostPresence != biomeId)
-        {
-            // a cell without the biome must have at least 5 neighbors that could
-            minCount = 5;
-        }
-
-        foreach (TerrainCell nCell in cell.Neighbors.Values)
-        {
-            if ((nCell.BiomeWithMostPresence == biomeId) ||
-                nCell.IsBelowSeaLevel)
-            {
-                nCount++;
-
-                if (nCount >= minCount)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return cell.GetLocalAndNeighborhoodMostPresentBiome(true) == biomeId;
     }
 
     public class Border
@@ -323,12 +300,11 @@ public static class BiomeCellRegionBuilder
         {
             TerrainCell cell = cellsToExplore.Dequeue();
 
-            foreach (TerrainCell nCell in cell.Neighbors.Values)
+            foreach (KeyValuePair<Direction, TerrainCell> pair in cell.GetNonDiagonalNeighbors())
             {
-                if (exploredCells.Contains(nCell))
-                {
-                    continue;
-                }
+                TerrainCell nCell = pair.Value;
+
+                if (exploredCells.Contains(nCell)) continue;
 
                 if (CanAddCellToRegion(nCell, biomeId))
                 {
