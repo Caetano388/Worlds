@@ -26,6 +26,7 @@ public static class BiomeCellRegionBuilder
 
     public const int MaxEnclosedRectArea = 25;
     public const int MaxEnclosedArea = 16;
+    public const int MinRegionSize = 25;
 
     private static TerrainCell _startCell;
     private static int _rngOffset;
@@ -41,7 +42,7 @@ public static class BiomeCellRegionBuilder
     {
         if (cell.Region != null) return false;
 
-        if (cell.IsBelowSeaLevel) return false;
+        if (cell.IsLiquidSea) return false;
 
         return cell.GetLocalAndNeighborhoodMostPresentBiome(true) == biomeId;
     }
@@ -161,7 +162,7 @@ public static class BiomeCellRegionBuilder
             {
                 TerrainCell cell = toAdd.Dequeue();
 
-                if (!cell.IsBelowSeaLevel)
+                if (!cell.IsLiquidSea)
                 {
                     set.Add(cell);
                     area++;
@@ -195,7 +196,8 @@ public static class BiomeCellRegionBuilder
 
     private static void TryExploreBorder(
         TerrainCell startCell,
-        string biomeId)
+        string biomeId,
+        HashSet<TerrainCell> existingCells)
     {
         if (_borderCells.Contains(startCell)) return;
 
@@ -207,6 +209,9 @@ public static class BiomeCellRegionBuilder
 
         HashSet<TerrainCell> inBorderCells = new HashSet<TerrainCell>();
         HashSet<TerrainCell> outBorderCells = new HashSet<TerrainCell>();
+
+        HashSet<TerrainCell> prevInBorderCells = new HashSet<TerrainCell>();
+        prevInBorderCells.UnionWith(existingCells);
 
         borderCellsToExplore.Enqueue(startCell);
         borderExploredCells.Add(startCell);
@@ -224,29 +229,43 @@ public static class BiomeCellRegionBuilder
                 Direction d = pair.Key;
                 TerrainCell nCell = pair.Value;
 
-                if (CanAddCellToRegion(nCell, biomeId))
+                if (prevInBorderCells.Contains(nCell))
                 {
                     inBorderCells.Add(nCell);
                 }
+                else if (CanAddCellToRegion(nCell, biomeId))
+                {
+                    // only consider cells that are adjacent to cells we already
+                    // know are inside border
+                    foreach (
+                        KeyValuePair<Direction, TerrainCell> nPair
+                        in nCell.GetNonDiagonalNeighbors())
+                    {
+                        if (prevInBorderCells.Contains(nPair.Value))
+                        {
+                            inBorderCells.Add(nCell);
+                            break;
+                        }
+                    }
+                }
                 else
                 {
-                    // ignore diagonal directions
-                    if (!TerrainCell.IsDiagonalDirection(d))
-                    {
-                        outBorderCells.Add(nCell);
-                    }
+                    outBorderCells.Add(nCell);
                 }
             }
 
+            prevInBorderCells.UnionWith(inBorderCells);
+
             // now find which neighbor cells are exactly in the border
-            foreach (TerrainCell cellIn in outBorderCells)
+            foreach (TerrainCell oCell in outBorderCells)
             {
                 bool isBorder = false;
 
-                // find if any of the neighbor to the neighbor is an cell outside
-                foreach (TerrainCell nc in cellIn.Neighbors.Values)
+                // find if any of the neighbors to the neighbor is an cell insider border
+                //foreach (TerrainCell nc in oCell.Neighbors.Values)
+                foreach (KeyValuePair<Direction, TerrainCell> pair in oCell.GetNonDiagonalNeighbors())
                 {
-                    if (inBorderCells.Contains(nc))
+                    if (inBorderCells.Contains(pair.Value))
                     {
                         isBorder = true;
                         break;
@@ -255,13 +274,10 @@ public static class BiomeCellRegionBuilder
 
                 if (isBorder)
                 {
-                    if (borderExploredCells.Contains(cellIn))
-                    {
-                        continue;
-                    }
+                    if (borderExploredCells.Contains(oCell)) continue;
 
-                    borderCellsToExplore.Enqueue(cellIn);
-                    borderExploredCells.Add(cellIn);
+                    borderCellsToExplore.Enqueue(oCell);
+                    borderExploredCells.Add(oCell);
                 }
             }
 
@@ -277,16 +293,29 @@ public static class BiomeCellRegionBuilder
         }
     }
 
-    public static Region TryGenerateRegion(
+    public static bool AddCellsWithinBiome(
         TerrainCell startCell,
-        Language language,
-        string biomeId)
+        string biomeId,
+        HashSet<TerrainCell> existingCells,
+        out HashSet<TerrainCell> addedCells,
+        out Border outsideBorder,
+        int abortSize = -1)
     {
+        outsideBorder = null;
+        addedCells = new HashSet<TerrainCell>();
+
         Queue<TerrainCell> cellsToExplore = new Queue<TerrainCell>();
         HashSet<TerrainCell> exploredCells = new HashSet<TerrainCell>();
-        HashSet<TerrainCell> acceptedCells = new HashSet<TerrainCell>();
+
+        if (existingCells != null)
+        {
+            addedCells.UnionWith(existingCells);
+            exploredCells.UnionWith(existingCells);
+        }
 
         HashSet<TerrainCell> borderCellsToExplore = new HashSet<TerrainCell>();
+
+        int addedCount = 0;
 
         cellsToExplore.Enqueue(startCell);
         exploredCells.Add(startCell);
@@ -299,6 +328,8 @@ public static class BiomeCellRegionBuilder
         while (cellsToExplore.Count > 0)
         {
             TerrainCell cell = cellsToExplore.Dequeue();
+
+            if ((abortSize > 0) && (addedCount >= abortSize)) return false;
 
             foreach (KeyValuePair<Direction, TerrainCell> pair in cell.GetNonDiagonalNeighbors())
             {
@@ -318,39 +349,107 @@ public static class BiomeCellRegionBuilder
                 exploredCells.Add(nCell);
             }
 
-            acceptedCells.Add(cell);
+            addedCells.Add(cell);
+            addedCount++;
         }
 
         foreach (TerrainCell cell in borderCellsToExplore)
         {
-            TryExploreBorder(cell, biomeId);
+            TryExploreBorder(cell, biomeId, addedCells);
         }
 
         foreach (Border border in _borders)
         {
-            if (border.RectArea < _largestBorderRectArea)
+            if (border.RectArea >= _largestBorderRectArea)
             {
-                if (border.RectArea <= MaxEnclosedRectArea)
-                {
-                    border.GetEnclosedCellSet(
-                        acceptedCells,
-                        out HashSet<TerrainCell> cellSet,
-                        out int area);
+                _largestBorderRectArea = border.RectArea;
+                outsideBorder = border;
+                continue;
+            }
 
-                    if (area <= MaxEnclosedArea)
-                    {
-                        acceptedCells.UnionWith(cellSet);
-                    }
+            if (border.RectArea <= MaxEnclosedRectArea)
+            {
+                border.GetEnclosedCellSet(
+                    addedCells,
+                    out HashSet<TerrainCell> cellSet,
+                    out int area);
+
+                if (area <= MaxEnclosedArea)
+                {
+                    addedCells.UnionWith(cellSet);
                 }
             }
+        }
+
+        return true;
+    }
+
+    public static Region TryGenerateRegion(
+        TerrainCell startCell,
+        Language language)
+    {
+        if (startCell.WaterBiomePresence >= 1)
+            return null;
+
+        if (startCell.Region != null)
+            return null;
+
+        string biomeId = startCell.GetLocalAndNeighborhoodMostPresentBiome(true);
+
+        AddCellsWithinBiome(startCell, biomeId, null,
+            out HashSet<TerrainCell> acceptedCells,
+            out Border outsideBorder);
+
+        HashSet<TerrainCell> cellsToSkip = new HashSet<TerrainCell>();
+        cellsToSkip.UnionWith(acceptedCells);
+
+        // Add neighboring areas that are too small to be regions of their own
+        while (true)
+        {
+            Border newBorder = null;
+            bool hasAddedCells = false;
+
+            foreach (TerrainCell borderCell in outsideBorder.Cells)
+            {
+#if DEBUG
+                Manager.AddUpdatedCell(borderCell, CellUpdateType.Region, CellUpdateSubType.Membership);
+#endif
+
+                if (borderCell.WaterBiomePresence >= 1) continue;
+                if (borderCell.Region != null) continue;
+                if (cellsToSkip.Contains(borderCell)) continue;
+
+                string borderBiomeId = borderCell.GetLocalAndNeighborhoodMostPresentBiome(true);
+
+                hasAddedCells |=
+                    AddCellsWithinBiome(
+                        borderCell,
+                        borderBiomeId,
+                        acceptedCells,
+                        out HashSet<TerrainCell> newCells,
+                        out Border possibleNewBorder,
+                        MaxEnclosedArea);
+
+                cellsToSkip.UnionWith(newCells);
+
+                if (hasAddedCells)
+                {
+                    acceptedCells = newCells;
+                    newBorder = possibleNewBorder;
+                    break;
+                }
+            }
+
+            // Couldn't add any more cells to region. So abort.
+            if (!hasAddedCells) break;
+
+            outsideBorder = newBorder;
         }
 
         CellRegion region = new CellRegion(startCell, language);
 
         region.AddCells(acceptedCells);
-
         region.EvaluateAttributes();
-
         region.Update();
 
         return region;
@@ -361,7 +460,7 @@ public static class BiomeCellRegionBuilder
         return _startCell.GetNextLocalRandomInt(_rngOffset++, maxValue);
     }
 
-    // older versions of
+    // older versions of Generate Region (TODO: remove them)
 
     public static Region TryGenerateRegion_reduced(
         TerrainCell startCell, Language establishmentLanguage, string biomeId)
