@@ -6,7 +6,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using System.ComponentModel;
 
-public class Language : ISynchronizable
+public class Language : Identifiable, ISynchronizable
 {
     private class ParsedWord
     {
@@ -144,9 +144,6 @@ public class Language : ISynchronizable
     public static Regex AgentNounSuffixRegex = new Regex(@"^(\w?er|r)$");
     public static Regex ConjugationSuffixRegex = new Regex(@"^(\w?ed|d|s)$");
 
-    [XmlAttribute]
-    public long Id;
-
     [XmlAttribute("AP")]
     public int ArticlePropertiesInt;
     [XmlAttribute("NIP")]
@@ -244,10 +241,8 @@ public class Language : ISynchronizable
     {
     }
 
-    public Language(long id)
+    public Language(long date, long id) : base(date, id)
     {
-        Id = id;
-
         _getRandomFloat = GenerateGetRandomFloatDelegate("");
     }
 
@@ -1425,10 +1420,15 @@ public class Language : ISynchronizable
         AdpositionNextSyllables.CodaChance = 0.5f;
     }
 
+    private long GenerateSeed(string morpheme)
+    {
+        return (long)Id.GetHashCode() + morpheme.GetHashCode();
+    }
+
     private GetRandomIntDelegate GenerateGetRandomIntDelegate(string morpheme = "")
     {
         int offset = 0;
-        long seed = Id + morpheme.GetHashCode();
+        long seed = GenerateSeed(morpheme);
 
         return (int maxValue) =>
         {
@@ -1445,7 +1445,7 @@ public class Language : ISynchronizable
     private GetRandomFloatDelegate GenerateGetRandomFloatDelegate(string morpheme)
     {
         int offset = 0;
-        long seed = Id + morpheme.GetHashCode();
+        long seed = GenerateSeed(morpheme);
 
         return () =>
         {

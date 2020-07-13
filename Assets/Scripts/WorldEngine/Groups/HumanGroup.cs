@@ -3,7 +3,7 @@ using System.Collections;
 using System.Xml;
 using System.Xml.Serialization;
 
-public abstract class HumanGroup : ISynchronizable {
+public abstract class HumanGroup : Identifiable, ISynchronizable {
 
 	[XmlAttribute("MT")]
 	public bool MigrationTagged;

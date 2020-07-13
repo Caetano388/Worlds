@@ -5,7 +5,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine.Profiling;
 
-public class PolityProminence : IKeyedValue<long>
+public class PolityProminence : IKeyedValue<Identifiable>
 {
     [XmlAttribute("PId")]
     public long PolityId;
@@ -35,14 +35,6 @@ public class PolityProminence : IKeyedValue<long>
 
     [XmlIgnore]
     public CellGroup Group;
-
-    public long Id
-    {
-        get
-        {
-            return Group.Id;
-        }
-    }
 
     public PolityProminence()
     {

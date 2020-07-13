@@ -8,12 +8,6 @@ using UnityEngine.Profiling;
 
 public delegate void ProgressCastDelegate(float value, string message = null, bool reset = false);
 
-public interface ISynchronizable
-{
-    void Synchronize();
-    void FinalizeLoad();
-}
-
 public static class RngOffsets
 {
     //public const int CELL_GROUP_CONSIDER_LAND_MIGRATION_TARGET = 0;
@@ -394,7 +388,8 @@ public class World : ISynchronizable
 
     private Dictionary<long, FactionInfo> _factionInfos = new Dictionary<long, FactionInfo>();
     private Dictionary<long, PolityInfo> _polityInfos = new Dictionary<long, PolityInfo>();
-    private Dictionary<long, RegionInfo> _regionInfos = new Dictionary<long, RegionInfo>();
+    private Dictionary<Identifiable, RegionInfo> _regionInfos =
+        new Dictionary<Identifiable, RegionInfo>();
 
     private BinaryTree<long, WorldEvent> _eventsToHappen = new BinaryTree<long, WorldEvent>();
 
@@ -426,7 +421,8 @@ public class World : ISynchronizable
     private HashSet<Polity> _politiesThatNeedClusterUpdate = new HashSet<Polity>();
     private HashSet<Polity> _politiesToRemove = new HashSet<Polity>();
 
-    private Dictionary<long, Language> _languages = new Dictionary<long, Language>();
+    private Dictionary<Identifiable, Language> _languages =
+        new Dictionary<Identifiable, Language>();
 
     private HashSet<long> _eventMessageIds = new HashSet<long>();
     private Queue<WorldEventMessage> _eventMessagesToShow = new Queue<WorldEventMessage>();
@@ -1653,19 +1649,19 @@ public class World : ISynchronizable
 
     public void AddLanguage(Language language)
     {
-        _languages.Add(language.Id, language);
+        _languages.Add(language, language);
 
         LanguageCount++;
     }
 
-    public void RemoveLanguage(Region language)
+    public void RemoveLanguage(Language language)
     {
-        _languages.Remove(language.Id);
+        _languages.Remove(language);
 
         LanguageCount--;
     }
 
-    public Language GetLanguage(long id)
+    public Language GetLanguage(Identifiable id)
     {
         _languages.TryGetValue(id, out Language language);
 
@@ -1674,12 +1670,12 @@ public class World : ISynchronizable
 
     public void AddRegionInfo(RegionInfo regionInfo)
     {
-        _regionInfos.Add(regionInfo.Id, regionInfo);
+        _regionInfos.Add(regionInfo, regionInfo);
 
         RegionCount++;
     }
 
-    public RegionInfo GetRegionInfo(long id)
+    public RegionInfo GetRegionInfo(Identifiable id)
     {
         RegionInfo regionInfo;
 
@@ -1984,7 +1980,7 @@ public class World : ISynchronizable
     {
         foreach (RegionInfo r in RegionInfos)
         {
-            _regionInfos.Add(r.Id, r);
+            _regionInfos.Add(r, r);
         }
 
 #if DEBUG
@@ -2020,7 +2016,7 @@ public class World : ISynchronizable
     {
         foreach (Language l in Languages)
         {
-            _languages.Add(l.Id, l);
+            _languages.Add(l, l);
         }
 
 #if DEBUG

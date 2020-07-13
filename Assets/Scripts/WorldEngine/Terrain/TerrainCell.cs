@@ -281,19 +281,19 @@ public class TerrainCell
         return Neighbors[TryGetNeighborDirection(offset)];
     }
 
-    public long GenerateUniqueIdentifier(long date, long oom = 1L, long offset = 0L)
+    public UniqueIdentifier GenerateUniqueIdentifier(long date, long baseId)
     {
-        if (oom > 1000L)
+        if (!date.IsInsideRange(0, World.MaxSupportedDate))
         {
-            Debug.LogWarning("'oom' shouldn't be greater than 1000 (oom = " + oom + ")");
+            throw new ArgumentException(
+                "TerrainCell.GenerateUniqueIdentifier - 'date' is outside of range of supported dates (date = " + date + ")");
         }
 
-        if (date >= World.MaxSupportedDate)
-        {
-            Debug.LogWarning("TerrainCell.GenerateUniqueIdentifier - 'date' is greater than " + World.MaxSupportedDate + " (date = " + date + ")");
-        }
+        long id =
+            (((Longitude * (long)Manager.WorldHeight) + Latitude) * Manager.PosIdOffset) +
+            (baseId % Manager.PosIdOffset);
 
-        return (((date * 1000000) + ((long)Longitude * 1000) + (long)Latitude) * oom) + (offset % oom);
+        return new UniqueIdentifier { Date = date, Id = id };
     }
 
     public TerrainCellAlteration GetAlteration(bool regardless = false, bool addLayerData = true)

@@ -3,16 +3,9 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using System.Linq;
 
-public class RegionInfo : ISynchronizable, IKeyedValue<long>
+public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiable>
 {
-    [XmlAttribute]
-    public long Id;
-
-    [XmlAttribute("LId")]
-    public long LanguageId;
-
-    [XmlAttribute("ED")]
-    public long EstablishmentDate;
+    public Identifier LanguageUId;
 
     public Region Region;
 
@@ -64,20 +57,20 @@ public class RegionInfo : ISynchronizable, IKeyedValue<long>
 
     }
 
-    public RegionInfo(Region region, TerrainCell originCell, Language language)
+    public RegionInfo(long date, long id, Region region, TerrainCell originCell, Language language)
+        : base(date, id)
     {
         World = originCell.World;
 
-        EstablishmentDate = World.CurrentDate;
+        //Id = originCell.GenerateUniqueIdentifier(EstablishmentDate, baseId);
 
-        Id = originCell.GenerateUniqueIdentifier(EstablishmentDate);
         Region = region;
 
         OriginCell = originCell;
         OriginCellPosition = originCell.Position;
 
         Language = language;
-        LanguageId = language.Id;
+        LanguageUId = language.UniqueIdentifier;
     }
 
     public void AddAttribute(RegionAttribute.Instance attribute)
@@ -99,45 +92,23 @@ public class RegionInfo : ISynchronizable, IKeyedValue<long>
         Elements.Add(element);
     }
 
-    public virtual void Synchronize()
+    public void Synchronize()
     {
         if (Region != null)
             Region.Synchronize();
     }
 
-    public virtual void FinalizeLoad()
+    public void FinalizeLoad()
     {
         OriginCell = World.GetCell(OriginCellPosition);
 
-        Language = World.GetLanguage(LanguageId);
-
-        //foreach (string attrName in AttributeNames)
-        //{
-        //    Attributes.Add(RegionAttribute.Attributes[attrName]);
-        //}
-
-        //foreach (string elemName in ElementIds)
-        //{
-        //    Elements.Add(Element.Elements[elemName]);
-        //}
+        Language = World.GetLanguage(LanguageUId);
 
         if (Region != null)
         {
             Region.Info = this;
             Region.FinalizeLoad();
         }
-    }
-
-    public string GetRandomAttributeVariation(GetRandomIntDelegate getRandomInt)
-    {
-        if (Attributes.Count <= 0)
-        {
-            return string.Empty;
-        }
-
-        int index = getRandomInt(Attributes.Count);
-
-        return AttributeList[index].GetRandomVariation(getRandomInt);
     }
 
     protected void AddElements(IEnumerable<Element.Instance> elem)
@@ -235,17 +206,17 @@ public class RegionInfo : ISynchronizable, IKeyedValue<long>
 
     private int GetRandomInt(int maxValue)
     {
-        return OriginCell.GetLocalRandomInt(EstablishmentDate, _rngOffset++, maxValue);
+        return OriginCell.GetLocalRandomInt(InitDate, _rngOffset++, maxValue);
     }
 
     private float GetRandomFloat()
     {
-        return OriginCell.GetLocalRandomFloat(EstablishmentDate, _rngOffset++);
+        return OriginCell.GetLocalRandomFloat(InitDate, _rngOffset++);
     }
 
     private void GenerateName()
     {
-        _rngOffset = RngOffsets.REGION_GENERATE_NAME + unchecked((int)Language.Id);
+        _rngOffset = RngOffsets.REGION_GENERATE_NAME + unchecked(Language.Id.GetHashCode());
 
         string untranslatedName;
 
@@ -319,8 +290,8 @@ public class RegionInfo : ISynchronizable, IKeyedValue<long>
         _name = new Name(untranslatedName, Language, World);
     }
 
-    public long GetKey()
+    public Identifiable GetKey()
     {
-        return Id;
+        return UniqueIdentifier;
     }
 }

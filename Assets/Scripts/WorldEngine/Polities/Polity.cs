@@ -94,7 +94,7 @@ public abstract class Polity : ISynchronizable
         get { return Info.Type; }
     }
 
-    public long Id
+    public UniqueIdentifier Id
     {
         get { return Info.Id; }
     }

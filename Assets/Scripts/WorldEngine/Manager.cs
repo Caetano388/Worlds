@@ -121,6 +121,7 @@ public class Manager
 
     public const int WorldWidth = 400;
     public const int WorldHeight = 200;
+    public const long PosIdOffset = long.MaxValue / (WorldWidth * WorldHeight);
 
     public const float BrushStrengthFactor_Base = 0.04f;
     public const float BrushStrengthFactor_Altitude = 0.5f;
@@ -3126,7 +3127,7 @@ public class Manager
 
         if (region != null)
         {
-            Color regionColor = GenerateColorFromId(region.Id);
+            Color regionColor = GenerateColorFromId(region.Info);
             
             Biome mostPresentBiome = Biome.Biomes[region.BiomeWithMostPresence];
             regionColor = mostPresentBiome.Color * 0.85f + regionColor * 0.15f;
@@ -3173,7 +3174,7 @@ public class Manager
 
             if (groupLanguage != null)
             {
-                Color languageColor = GenerateColorFromId(groupLanguage.Id, 100);
+                Color languageColor = GenerateColorFromId(groupLanguage);
 
                 bool isLanguageBorder = IsLanguageBorder(groupLanguage, cell);
 
@@ -3214,7 +3215,7 @@ public class Manager
         {
             Polity territoryPolity = cell.EncompassingTerritory.Polity;
 
-            color = GenerateColorFromId(territoryPolity.Id, 100);
+            color = GenerateColorFromId(territoryPolity.Id);
 
             bool isTerritoryBorder = IsTerritoryBorder(cell.EncompassingTerritory, cell);
             bool isPolityCoreGroup = territoryPolity.CoreGroup == cell.Group;
@@ -3258,7 +3259,7 @@ public class Manager
 
                 if (prominence.Cluster != null)
                 {
-                    color = GenerateColorFromId(prominence.Cluster.Id, 100);
+                    color = GenerateColorFromId(prominence.Cluster.Id);
                 }
             }
             else
@@ -3278,7 +3279,7 @@ public class Manager
             {
                 Polity territoryPolity = cell.EncompassingTerritory.Polity;
 
-                Color territoryColor = GenerateColorFromId(territoryPolity.Id, 100);
+                Color territoryColor = GenerateColorFromId(territoryPolity.Id);
 
                 PolityProminence pi = cell.Group.GetPolityProminence(territoryPolity);
 
@@ -3311,7 +3312,7 @@ public class Manager
 
                 float prominenceValueFactor = 0.2f + p.Value;
 
-                Color polityColor = GenerateColorFromId(p.PolityId, 100);
+                Color polityColor = GenerateColorFromId(p.PolityId);
                 polityColor *= prominenceValueFactor;
                 totalProminenceValueFactor += prominenceValueFactor;
 
@@ -3333,14 +3334,14 @@ public class Manager
         return color;
     }
 
-    private static Color GenerateColorFromId(long id, int oom = 1)
+    private static Color GenerateColorFromId(Identifiable id)
     {
-        long mId = id / oom;
+        int mId = id.GetHashCode();
 
-        long primaryColor = mId % 3;
+        int primaryColor = mId % 3;
         float secondaryColorIntensity = ((mId / 3) % 4) / 3f;
         float tertiaryColorIntensity = ((mId / 12) % 2) / 2f;
-        long secondaryColor = (mId / 24) % 2;
+        int secondaryColor = (mId / 24) % 2;
 
         float red = 0;
         float green = 0;
@@ -3920,7 +3921,7 @@ public class Manager
 
             Polity territoryPolity = cell.EncompassingTerritory.Polity;
 
-            groupColor = GenerateColorFromId(territoryPolity.Id, 100);
+            groupColor = GenerateColorFromId(territoryPolity.Id);
 
             bool isTerritoryBorder = IsTerritoryBorder(cell.EncompassingTerritory, cell);
             bool isCoreGroup = territoryPolity.CoreGroup == cell.Group;

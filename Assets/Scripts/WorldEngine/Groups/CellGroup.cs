@@ -36,9 +36,6 @@ public class CellGroup : HumanGroup, IFlagHolder
 
     public static List<ICellGroupEventGenerator> OnSpawnEventGenerators;
 
-    [XmlAttribute]
-    public long Id;
-
     [XmlAttribute("PMD")]
     public int PreferredMigrationDirectionInt;
 

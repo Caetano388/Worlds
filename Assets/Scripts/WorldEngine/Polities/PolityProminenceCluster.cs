@@ -4,13 +4,10 @@ using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-public class PolityProminenceCluster : ISynchronizable
+public class PolityProminenceCluster : Identifiable, ISynchronizable
 {
     public const int MaxSize = 50;
     public const int MinSplitSize = 25;
-
-    [XmlAttribute("Id")]
-    public long Id;
 
     [XmlAttribute("TAC")]
     public float TotalAdministrativeCost = 0;
@@ -31,9 +28,6 @@ public class PolityProminenceCluster : ISynchronizable
 
 #if DEBUG
     [XmlIgnore]
-    public long CreationDate = -1;
-
-    [XmlIgnore]
     public long LastProminenceChangeDate = -1;
 #endif
 
@@ -51,14 +45,10 @@ public class PolityProminenceCluster : ISynchronizable
     {
     }
 
-    public PolityProminenceCluster(PolityProminence startProminence)
+    public PolityProminenceCluster(PolityProminence startProminence) :
+        base(startProminence.Group.InitDate, startProminence.Group.Id)
     {
-        Id = startProminence.Id;
         Polity = startProminence.Polity;
-
-#if DEBUG
-        CreationDate = Polity.World.CurrentDate;
-#endif
 
         AddProminence(startProminence);
     }
