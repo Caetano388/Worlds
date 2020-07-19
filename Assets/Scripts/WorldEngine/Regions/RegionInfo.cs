@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using System.Linq;
 
-public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifier>
+public class RegionInfo : Identifiable
 {
-    public Identifier LanguageUId;
+    public Identifier LanguageId;
 
     public Region Region;
 
@@ -60,12 +60,12 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifier>
     public RegionInfo(
         Region region,
         TerrainCell originCell,
-        long baseId,
+        long idOffset,
         Language language)
     {
         World = originCell.World;
 
-        Init(World.CurrentDate, originCell.GenerateInitId(baseId));
+        Init(World.CurrentDate, originCell.GenerateInitId(idOffset));
 
         Region = region;
 
@@ -73,7 +73,7 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifier>
         OriginCellPosition = originCell.Position;
 
         Language = language;
-        LanguageUId = language.UniqueIdentifier;
+        LanguageId = language.Id;
     }
 
     public void AddAttribute(RegionAttribute.Instance attribute)
@@ -95,17 +95,19 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifier>
         Elements.Add(element);
     }
 
-    public void Synchronize()
+    public override void Synchronize()
     {
         if (Region != null)
             Region.Synchronize();
     }
 
-    public void FinalizeLoad()
+    public override void FinalizeLoad()
     {
+        base.FinalizeLoad();
+
         OriginCell = World.GetCell(OriginCellPosition);
 
-        Language = World.GetLanguage(LanguageUId);
+        Language = World.GetLanguage(LanguageId);
 
         if (Region != null)
         {
@@ -291,10 +293,5 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifier>
         untranslatedName = "[Proper][NP](" + adjective + elementNoun + secondaryAttributeNoun + primaryAttributeNoun + ")";
 
         _name = new Name(untranslatedName, Language, World);
-    }
-
-    public Identifier GetKey()
-    {
-        return UniqueIdentifier;
     }
 }

@@ -101,9 +101,6 @@ public class CellGroup : HumanGroup, IFlagHolder
     [XmlAttribute("PED")]
     public long PolityExpansionEventDate;
 
-    public Identifier ExpansionTargetGroupId;
-    public Identifier ExpandingPolityId;
-
     [XmlAttribute("TFEv")]
     public bool HasTribeFormationEvent = false;
     [XmlAttribute("TFD")]
@@ -115,6 +112,9 @@ public class CellGroup : HumanGroup, IFlagHolder
     public int AccessibilityModifier = 0;
     [XmlAttribute("NvM")]
     public int NavigationRangeModifier = 0;
+
+    public Identifier ExpansionTargetGroupId;
+    public Identifier ExpandingPolityId;
 
     public Route SeaMigrationRoute = null;
 
@@ -172,7 +172,7 @@ public class CellGroup : HumanGroup, IFlagHolder
     public Direction PreferredMigrationDirection;
 
     [XmlIgnore]
-    public Dictionary<Identifiable, Faction> FactionCores = new Dictionary<Identifiable, Faction>();
+    public Dictionary<Identifier, Faction> FactionCores = new Dictionary<Identifier, Faction>();
 
     [XmlIgnore]
     public UpdateCellGroupEvent UpdateEvent;
@@ -234,16 +234,16 @@ public class CellGroup : HumanGroup, IFlagHolder
     public PolityProminence HighestPolityProminence = null;
     //#endif
 
-    private Dictionary<Identifiable, PolityProminence> _polityProminences =
-        new Dictionary<Identifiable, PolityProminence>();
+    private Dictionary<Identifier, PolityProminence> _polityProminences =
+        new Dictionary<Identifier, PolityProminence>();
 
     private CellUpdateType _cellUpdateType = CellUpdateType.None;
     private CellUpdateSubType _cellUpdateSubtype = CellUpdateSubType.None;
 
-    private HashSet<Identifiable> _polityProminencesToRemove =
-        new HashSet<Identifiable>();
-    private Dictionary<Identifiable, PolityProminence> _polityProminencesToAdd =
-        new Dictionary<Identifiable, PolityProminence>();
+    private HashSet<Identifier> _polityProminencesToRemove =
+        new HashSet<Identifier>();
+    private Dictionary<Identifier, PolityProminence> _polityProminencesToAdd =
+        new Dictionary<Identifier, PolityProminence>();
 
     private HashSet<string> _flags = new HashSet<string>();
 
@@ -524,9 +524,9 @@ public class CellGroup : HumanGroup, IFlagHolder
         return new CellGroupSnapshot(this);
     }
 
-    public long GenerateInitId(long baseId = 0L)
+    public long GenerateInitId(long idOffset = 0L)
     {
-        return Cell.GenerateInitId(baseId);
+        return Cell.GenerateInitId(idOffset);
     }
 
     public void SetHighestPolityProminence(PolityProminence prominence)
@@ -763,8 +763,8 @@ public class CellGroup : HumanGroup, IFlagHolder
 
     public void MergePolityProminence(PolityProminence sourcePolityProminence, float percentOfTarget)
     {
-        Dictionary<Identifiable, PolityProminence> targetPolityProminences =
-            new Dictionary<Identifiable, PolityProminence>(_polityProminences);
+        Dictionary<Identifier, PolityProminence> targetPolityProminences =
+            new Dictionary<Identifier, PolityProminence>(_polityProminences);
 
         foreach (PolityProminence pi in _polityProminencesToAdd.Values)
         {
@@ -779,8 +779,8 @@ public class CellGroup : HumanGroup, IFlagHolder
 
     public void MergePolityProminences(List<PolityProminence> sourcePolityProminences, int sourceProminencesCount, float percentOfTarget)
     {
-        Dictionary<Identifiable, PolityProminence> targetPolityProminences =
-            new Dictionary<Identifiable, PolityProminence>(_polityProminences);
+        Dictionary<Identifier, PolityProminence> targetPolityProminences =
+            new Dictionary<Identifier, PolityProminence>(_polityProminences);
 
         foreach (PolityProminence pi in _polityProminencesToAdd.Values)
         {
@@ -802,7 +802,7 @@ public class CellGroup : HumanGroup, IFlagHolder
 
     private void MergePolityProminenceInternal_Add(
         PolityProminence sourcePolityProminence,
-        Dictionary<Identifiable, PolityProminence> targetPolityProminences,
+        Dictionary<Identifier, PolityProminence> targetPolityProminences,
         float percentOfTarget)
     {
         Polity polity = sourcePolityProminence.Polity;
@@ -845,7 +845,7 @@ public class CellGroup : HumanGroup, IFlagHolder
     }
 
     private void MergePolityProminencesInternal_Finalize(
-        Dictionary<Identifiable, PolityProminence> targetPolityProminences,
+        Dictionary<Identifier, PolityProminence> targetPolityProminences,
         float percentOfTarget)
     {
         foreach (PolityProminence pProminence in targetPolityProminences.Values)
@@ -2026,7 +2026,7 @@ public class CellGroup : HumanGroup, IFlagHolder
 
         PolityExpansionEventDate = nextDate;
         ExpandingPolityId = selectedPi.PolityId;
-        ExpansionTargetGroupId = targetGroup.UniqueIdentifier;
+        ExpansionTargetGroupId = targetGroup.Id;
     }
 
     public void Destroy()
@@ -2239,7 +2239,7 @@ public class CellGroup : HumanGroup, IFlagHolder
 
         float chanceFactor = 1f / (float)groupCount;
 
-        int offset = RngOffsets.CELL_GROUP_SET_POLITY_UPDATE + unchecked(p.Info.GetHashCode());
+        int offset = RngOffsets.CELL_GROUP_SET_POLITY_UPDATE + unchecked(p.GetHashCode());
 
         float rollValue = Cell.GetNextLocalRandomFloat(offset, registerForTesting: false);
 
@@ -2996,7 +2996,7 @@ public class CellGroup : HumanGroup, IFlagHolder
     {
         TotalPolityProminenceValue = 0;
 
-        foreach (Identifiable polityId in _polityProminencesToRemove)
+        foreach (Identifier polityId in _polityProminencesToRemove)
         {
             PolityProminence polityProminence;
 
@@ -3144,7 +3144,7 @@ public class CellGroup : HumanGroup, IFlagHolder
     {
         TotalPolityProminenceValue = 0;
 
-        foreach (Identifiable polityId in _polityProminencesToRemove)
+        foreach (Identifier polityId in _polityProminencesToRemove)
         {
             PolityProminence pi;
 
@@ -3456,16 +3456,9 @@ public class CellGroup : HumanGroup, IFlagHolder
             }
         }
 
-        FactionCoreIds = new List<Identifier>(FactionCores.Count);
-
-        foreach (Identifiable key in FactionCores.Keys)
-        {
-            FactionCoreIds.Add(key.UniqueIdentifier);
-        }
+        FactionCoreIds = new List<Identifier>(FactionCores.Keys);
 
         PreferredMigrationDirectionInt = (int)PreferredMigrationDirection;
-
-        base.Synchronize();
     }
 
 #if DEBUG

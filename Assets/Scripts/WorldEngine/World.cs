@@ -387,12 +387,12 @@ public class World : ISynchronizable
     [XmlIgnore]
     public Dictionary<string, Discovery> ExistingDiscoveries = new Dictionary<string, Discovery>();
 
-    private Dictionary<Identifiable, FactionInfo> _factionInfos =
-        new Dictionary<Identifiable, FactionInfo>();
-    private Dictionary<Identifiable, PolityInfo> _polityInfos =
-        new Dictionary<Identifiable, PolityInfo>();
-    private Dictionary<Identifiable, RegionInfo> _regionInfos =
-        new Dictionary<Identifiable, RegionInfo>();
+    private Dictionary<Identifier, FactionInfo> _factionInfos =
+        new Dictionary<Identifier, FactionInfo>();
+    private Dictionary<Identifier, PolityInfo> _polityInfos =
+        new Dictionary<Identifier, PolityInfo>();
+    private Dictionary<Identifier, RegionInfo> _regionInfos =
+        new Dictionary<Identifier, RegionInfo>();
 
     private BinaryTree<long, WorldEvent> _eventsToHappen = new BinaryTree<long, WorldEvent>();
 
@@ -403,7 +403,8 @@ public class World : ISynchronizable
     private HashSet<string> _culturalSkillIdList = new HashSet<string>();
     private HashSet<string> _culturalKnowledgeIdList = new HashSet<string>();
 
-    private Dictionary<Identifiable, CellGroup> _cellGroups = new Dictionary<Identifiable, CellGroup>();
+    private Dictionary<Identifier, CellGroup> _cellGroups =
+        new Dictionary<Identifier, CellGroup>();
 
     private HashSet<CellGroup> _updatedGroups = new HashSet<CellGroup>();
     private HashSet<CellGroup> _groupsToUpdate = new HashSet<CellGroup>();
@@ -414,7 +415,8 @@ public class World : ISynchronizable
 
     private List<MigratingGroup> _migratingGroups = new List<MigratingGroup>();
 
-    private Dictionary<long, Agent> _memorableAgents = new Dictionary<long, Agent>();
+    private Dictionary<Identifier, Agent> _memorableAgents =
+        new Dictionary<Identifier, Agent>();
 
     private HashSet<Faction> _factionsToSplit = new HashSet<Faction>();
     private HashSet<Faction> _factionsToUpdate = new HashSet<Faction>();
@@ -424,8 +426,8 @@ public class World : ISynchronizable
     private HashSet<Polity> _politiesThatNeedClusterUpdate = new HashSet<Polity>();
     private HashSet<Polity> _politiesToRemove = new HashSet<Polity>();
 
-    private Dictionary<Identifiable, Language> _languages =
-        new Dictionary<Identifiable, Language>();
+    private Dictionary<Identifier, Language> _languages =
+        new Dictionary<Identifier, Language>();
 
     private HashSet<long> _eventMessageIds = new HashSet<long>();
     private Queue<WorldEventMessage> _eventMessagesToShow = new Queue<WorldEventMessage>();
@@ -1558,7 +1560,7 @@ public class World : ISynchronizable
 
     public void AddGroup(CellGroup group)
     {
-        _cellGroups.Add(group, group);
+        _cellGroups.Add(group.Id, group);
 
         Manager.AddUpdatedCell(group.Cell, CellUpdateType.GroupTerritoryClusterAndLanguage, CellUpdateSubType.AllButTerrain);
 
@@ -1567,14 +1569,14 @@ public class World : ISynchronizable
 
     public void RemoveGroup(CellGroup group)
     {
-        _cellGroups.Remove(group);
+        _cellGroups.Remove(group.Id);
 
         Manager.AddUpdatedCell(group.Cell, CellUpdateType.GroupTerritoryClusterAndLanguage, CellUpdateSubType.AllButTerrain);
 
         CellGroupCount--;
     }
 
-    public CellGroup GetGroup(Identifiable id)
+    public CellGroup GetGroup(Identifier id)
     {
         CellGroup group;
 
@@ -1654,19 +1656,19 @@ public class World : ISynchronizable
 
     public void AddLanguage(Language language)
     {
-        _languages.Add(language, language);
+        _languages.Add(language.Id, language);
 
         LanguageCount++;
     }
 
     public void RemoveLanguage(Language language)
     {
-        _languages.Remove(language);
+        _languages.Remove(language.Id);
 
         LanguageCount--;
     }
 
-    public Language GetLanguage(Identifiable id)
+    public Language GetLanguage(Identifier id)
     {
         _languages.TryGetValue(id, out Language language);
 
@@ -1675,12 +1677,12 @@ public class World : ISynchronizable
 
     public void AddRegionInfo(RegionInfo regionInfo)
     {
-        _regionInfos.Add(regionInfo, regionInfo);
+        _regionInfos.Add(regionInfo.Id, regionInfo);
 
         RegionCount++;
     }
 
-    public RegionInfo GetRegionInfo(Identifiable id)
+    public RegionInfo GetRegionInfo(Identifier id)
     {
         RegionInfo regionInfo;
 
@@ -1699,7 +1701,7 @@ public class World : ISynchronizable
         }
     }
 
-    public Agent GetMemorableAgent(long id)
+    public Agent GetMemorableAgent(Identifier id)
     {
         Agent agent;
 
@@ -1710,12 +1712,12 @@ public class World : ISynchronizable
 
     public void AddFactionInfo(FactionInfo factionInfo)
     {
-        _factionInfos.Add(factionInfo, factionInfo);
+        _factionInfos.Add(factionInfo.Id, factionInfo);
 
         FactionCount++;
     }
 
-    public FactionInfo GetFactionInfo(Identifiable id)
+    public FactionInfo GetFactionInfo(Identifier id)
     {
         FactionInfo factionInfo = null;
 
@@ -1724,7 +1726,7 @@ public class World : ISynchronizable
         return factionInfo;
     }
 
-    public Faction GetFaction(Identifiable id)
+    public Faction GetFaction(Identifier id)
     {
         FactionInfo factionInfo;
 
@@ -1736,7 +1738,7 @@ public class World : ISynchronizable
         return factionInfo.Faction;
     }
 
-    public bool ContainsFactionInfo(Identifiable id)
+    public bool ContainsFactionInfo(Identifier id)
     {
         return _factionInfos.ContainsKey(id);
     }
@@ -1821,7 +1823,7 @@ public class World : ISynchronizable
 
     public void AddPolityInfo(PolityInfo info)
     {
-        _polityInfos.Add(info, info);
+        _polityInfos.Add(info.Id, info);
 
         PolityCount++;
     }
@@ -1831,7 +1833,7 @@ public class World : ISynchronizable
         return _polityInfos.Values;
     }
 
-    public PolityInfo GetPolityInfo(Identifiable id)
+    public PolityInfo GetPolityInfo(Identifier id)
     {
         if (!_polityInfos.TryGetValue(id, out PolityInfo polityInfo))
         {
@@ -1841,7 +1843,7 @@ public class World : ISynchronizable
         return polityInfo;
     }
 
-    public Polity GetPolity(Identifiable id)
+    public Polity GetPolity(Identifier id)
     {
         if (!_polityInfos.TryGetValue(id, out PolityInfo polityInfo))
         {
@@ -1983,9 +1985,9 @@ public class World : ISynchronizable
 
     private void LoadRegionInfos()
     {
-        foreach (RegionInfo r in RegionInfos)
+        foreach (RegionInfo rInfo in RegionInfos)
         {
-            _regionInfos.Add(r, r);
+            _regionInfos.Add(rInfo.Id, rInfo);
         }
 
 #if DEBUG
@@ -1997,7 +1999,7 @@ public class World : ISynchronizable
     {
         foreach (PolityInfo pInfo in PolityInfos)
         {
-            _polityInfos.Add(pInfo, pInfo);
+            _polityInfos.Add(pInfo.Id, pInfo);
         }
 
 #if DEBUG
@@ -2009,7 +2011,7 @@ public class World : ISynchronizable
     {
         foreach (FactionInfo fInfo in FactionInfos)
         {
-            _factionInfos.Add(fInfo, fInfo);
+            _factionInfos.Add(fInfo.Id, fInfo);
         }
 
 #if DEBUG
@@ -2019,9 +2021,9 @@ public class World : ISynchronizable
 
     private void LoadLanguages()
     {
-        foreach (Language l in Languages)
+        foreach (Language language in Languages)
         {
-            _languages.Add(l, l);
+            _languages.Add(language.Id, language);
         }
 
 #if DEBUG
@@ -2081,12 +2083,12 @@ public class World : ISynchronizable
             }
         }
 
-        foreach (CellGroup g in CellGroups)
+        foreach (CellGroup group in CellGroups)
         {
-            g.World = this;
-            g.PrefinalizeLoad();
+            group.World = this;
+            group.PrefinalizeLoad();
 
-            _cellGroups.Add(g, g);
+            _cellGroups.Add(group.Id, group);
         }
 
         // Segment 2

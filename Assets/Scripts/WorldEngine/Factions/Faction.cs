@@ -98,7 +98,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 
     public string Type => Info.Type;
 
-    public Identifiable Id => Info;
+    public Identifier Id => Info.Id;
 
     public long FormationDate => Info.FormationDate;
 
@@ -115,9 +115,11 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
     [Obsolete]
     protected float _splitFactionMaxInfluence;
 
-    protected Dictionary<long, FactionRelationship> _relationships = new Dictionary<long, FactionRelationship>();
+    protected Dictionary<Identifier, FactionRelationship> _relationships =
+        new Dictionary<Identifier, FactionRelationship>();
 
-    protected Dictionary<long, FactionEvent> _events = new Dictionary<long, FactionEvent>();
+    protected Dictionary<long, FactionEvent> _events =
+        new Dictionary<long, FactionEvent>();
 
     private readonly DatedValue<float> _administrativeLoad;
     private readonly DatedValue<Agent> _currentLeader;
@@ -150,18 +152,18 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 
         if (parentFaction != null)
         {
-            idOffset = parentFaction.Id + 1;
+            idOffset = parentFaction.GetHashCode();
         }
 
-        PolityId = polity.Info.UniqueIdentifier;
+        PolityId = polity.Id;
         Polity = polity;
 
         CoreGroup = coreGroup;
-        CoreGroupId = coreGroup.UniqueIdentifier;
+        CoreGroupId = coreGroup.Id;
 
-        long id = GenerateUniqueIdentifier(World.CurrentDate, 100L, idOffset);
+        long initId = GenerateInitId(idOffset);
 
-        Info = new FactionInfo(type, World.CurrentDate, id, this);
+        Info = new FactionInfo(this, type, World.CurrentDate, initId);
 
         Culture = new FactionCulture(this);
 
@@ -187,6 +189,11 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
     }
 
     protected abstract float CalculateAdministrativeLoad();
+
+    public override int GetHashCode()
+    {
+        return Info.GetHashCode();
+    }
 
     public virtual string GetName()
     {
@@ -240,17 +247,6 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         Info.Faction = null;
 
         StillPresent = false;
-    }
-
-    public static int CompareId(Faction a, Faction b)
-    {
-        if (a.Id > b.Id)
-            return 1;
-
-        if (a.Id < b.Id)
-            return -1;
-
-        return 0;
     }
 
     public void SetToUpdate()
@@ -349,7 +345,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 
         Profiler.BeginSample("RequestCurrentLeader - new Agent");
 
-        LastLeader = new Agent(CoreGroup, spawnDate - startAge, Id);
+        LastLeader = new Agent(CoreGroup, spawnDate - startAge, GetHashCode());
         LeaderStartDate = spawnDate;
 
         Profiler.EndSample();
@@ -364,7 +360,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         // Generate a birthdate from the leader spawnDate (when the leader takes over)
         int startAge = minStartAge + CoreGroup.GetLocalRandomInt(spawnDate, offset++, maxStartAge - minStartAge);
 
-        LastLeader = new Agent(CoreGroup, spawnDate - startAge, Id);
+        LastLeader = new Agent(CoreGroup, spawnDate - startAge, GetHashCode());
         LeaderStartDate = spawnDate;
 
         return LastLeader;
@@ -617,7 +613,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         CoreGroup.RemoveFactionCore(this);
 
         CoreGroup = NewCoreGroup;
-        CoreGroupId = NewCoreGroup.UniqueIdentifier;
+        CoreGroupId = NewCoreGroup.Id;
 
         CoreGroup.AddFactionCore(this);
 
@@ -712,24 +708,24 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         World.InsertEventToHappen(factionEvent);
     }
 
-    public long GenerateUniqueIdentifier(long date, long oom = 1L, long offset = 0L)
+    public long GenerateInitId(long idOffset = 0L)
     {
-        return CoreGroup.GenerateUniqueIdentifier(date, oom, offset);
+        return CoreGroup.GenerateInitId(idOffset);
     }
 
     public float GetNextLocalRandomFloat(int iterationOffset)
     {
-        return CoreGroup.GetNextLocalRandomFloat(iterationOffset + unchecked((int)Id));
+        return CoreGroup.GetNextLocalRandomFloat(iterationOffset + unchecked(GetHashCode()));
     }
 
     public float GetLocalRandomFloat(int date, int iterationOffset)
     {
-        return CoreGroup.GetLocalRandomFloat(date, iterationOffset + unchecked((int)Id));
+        return CoreGroup.GetLocalRandomFloat(date, iterationOffset + unchecked(GetHashCode()));
     }
 
     public int GetNextLocalRandomInt(int iterationOffset, int maxValue)
     {
-        return CoreGroup.GetNextLocalRandomInt(iterationOffset + unchecked((int)Id), maxValue);
+        return CoreGroup.GetNextLocalRandomInt(iterationOffset + unchecked(GetHashCode()), maxValue);
     }
 
     public virtual void SetDominant(bool state)
@@ -752,7 +748,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         Polity.RemoveFaction(this);
 
         Polity = targetPolity;
-        PolityId = Polity.Info.UniqueIdentifier;
+        PolityId = Polity.Id;
         Influence = targetInfluence;
 
         targetPolity.AddFaction(this);

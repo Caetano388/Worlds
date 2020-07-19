@@ -27,5 +27,25 @@ public class Identifier : Identifiable
         Init(date, id);
     }
 
-    public override Identifier UniqueIdentifier => this;
+    public static implicit operator Identifier(string idString)
+    {
+        return new Identifier(idString);
+    }
+
+    public override void Synchronize()
+    {
+    }
+
+    public override void FinalizeLoad()
+    {
+        _id = this;
+    }
+
+    protected override void Init(long date, long id)
+    {
+        InitDate = date;
+        InitId = id;
+
+        _id = this;
+    }
 }

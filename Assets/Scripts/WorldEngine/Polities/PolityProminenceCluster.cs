@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.Profiling;
 
-public class PolityProminenceCluster : Identifiable, ISynchronizable
+public class PolityProminenceCluster : Identifiable
 {
     public const int MaxSize = 50;
     public const int MinSplitSize = 25;
@@ -35,8 +35,8 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     public int Size => _prominences.Count;
 
-    private Dictionary<Identifiable, PolityProminence> _prominences =
-        new Dictionary<Identifiable, PolityProminence>();
+    private Dictionary<Identifier, PolityProminence> _prominences =
+        new Dictionary<Identifier, PolityProminence>();
 
     public PolityProminenceCluster()
     {
@@ -179,7 +179,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     public bool HasPolityProminence(CellGroup group)
     {
-        return _prominences.ContainsKey(group);
+        return _prominences.ContainsKey(group.Id);
     }
 
     public ICollection<PolityProminence> GetPolityProminences()
@@ -189,9 +189,9 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     public PolityProminence GetPolityProminence(CellGroup group)
     {
-        if (_prominences.ContainsKey(group))
+        if (_prominences.ContainsKey(group.Id))
         {
-            return _prominences[group];
+            return _prominences[group.Id];
         }
 
         return null;
@@ -257,7 +257,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
                 if (HasPolityProminence(nGroup))
                 {
-                    PolityProminence prominenceToAdd = _prominences[nGroup];
+                    PolityProminence prominenceToAdd = _prominences[nGroup.Id];
 
                     RemoveProminence(prominenceToAdd);
                     splitCluster.AddProminence(prominenceToAdd);
@@ -284,7 +284,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
         return splitCluster;
     }
 
-    private PolityProminence GetProminenceOrThrow(Identifiable id)
+    private PolityProminence GetProminenceOrThrow(Identifier id)
     {
         CellGroup group = Polity.World.GetGroup(id);
 
@@ -313,11 +313,13 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
         }
     }
 
-    public void FinalizeLoad()
+    public override void FinalizeLoad()
     {
+        base.FinalizeLoad();
+
         LoadProminences();
 
-        foreach (KeyValuePair<Identifiable, PolityProminence> pair in _prominences)
+        foreach (KeyValuePair<Identifier, PolityProminence> pair in _prominences)
         {
             PolityProminence p = pair.Value;
 
@@ -327,14 +329,9 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
         }
     }
 
-    public void Synchronize()
+    public override void Synchronize()
     {
-        ProminenceIds = new List<Identifier>(_prominences.Count);
-
-        foreach (Identifiable key in _prominences.Keys)
-        {
-            ProminenceIds.Add(key.UniqueIdentifier);
-        }
+        ProminenceIds = new List<Identifier>(_prominences.Keys);
 
         // Reload prominences to make sure they are ordered as in the save file
         _prominences.Clear();

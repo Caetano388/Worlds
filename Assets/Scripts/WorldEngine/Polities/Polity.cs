@@ -70,7 +70,7 @@ public abstract class Polity : ISynchronizable
 #endif
 
     [XmlIgnore]
-    public Dictionary<Identifiable, CellGroup> Groups = new Dictionary<Identifiable, CellGroup>();
+    public Dictionary<Identifier, CellGroup> Groups = new Dictionary<Identifier, CellGroup>();
 
     [XmlIgnore]
     public PolityInfo Info;
@@ -87,7 +87,7 @@ public abstract class Polity : ISynchronizable
     [XmlIgnore]
     public bool WillBeUpdated;
 
-    public Identifiable Id => Info;
+    public Identifier Id => Info.Id;
 
     public string Type => Info.Type;
 
@@ -180,17 +180,17 @@ public abstract class Polity : ISynchronizable
 
     protected Dictionary<long, PolityEvent> _events = new Dictionary<long, PolityEvent>();
 
-    private Dictionary<Identifiable, Faction> _factions = new Dictionary<Identifiable, Faction>();
+    private Dictionary<Identifier, Faction> _factions = new Dictionary<Identifier, Faction>();
 
     private bool _willBeRemoved = false;
 
-    private SortedDictionary<Identifiable, PolityProminence> _prominencesToAddToClusters =
-        new SortedDictionary<Identifiable, PolityProminence>();
+    private SortedDictionary<Identifier, PolityProminence> _prominencesToAddToClusters =
+        new SortedDictionary<Identifier, PolityProminence>();
 
     private HashSet<long> _eventMessageIds = new HashSet<long>();
 
-    private Dictionary<Identifiable, PolityContact> _contacts =
-        new Dictionary<Identifiable, PolityContact>();
+    private Dictionary<Identifier, PolityContact> _contacts =
+        new Dictionary<Identifier, PolityContact>();
 
     public Polity()
     {
@@ -204,11 +204,11 @@ public abstract class Polity : ISynchronizable
         Territory = new Territory(this);
 
         CoreGroup = coreGroup;
-        CoreGroupId = coreGroup.UniqueIdentifier;
+        CoreGroupId = coreGroup.Id;
 
         long initId = GenerateInitId(idOffset);
 
-        Info = new PolityInfo(this, type, initId);
+        Info = new PolityInfo(this, type, World.CurrentDate, initId);
 
         Culture = new PolityCulture(this);
 
@@ -285,6 +285,11 @@ public abstract class Polity : ISynchronizable
         Info.Polity = null;
 
         StillPresent = false;
+    }
+
+    public override int GetHashCode()
+    {
+        return Info.GetHashCode();
     }
 
     // WARNING: This method does not set a group to be updated. 
@@ -382,14 +387,14 @@ public abstract class Polity : ISynchronizable
         }
 
         CoreGroup = coreGroup;
-        CoreGroupId = coreGroup.UniqueIdentifier;
+        CoreGroupId = coreGroup.Id;
 
         Manager.AddUpdatedCell(coreGroup.Cell, CellUpdateType.Territory, CellUpdateSubType.Core);
     }
 
-    public long GenerateInitId(long baseId = 0L)
+    public long GenerateInitId(long idOffset = 0L)
     {
-        return CoreGroup.GenerateInitId(baseId);
+        return CoreGroup.GenerateInitId(idOffset);
     }
 
     public float GetNextLocalRandomFloat(int iterationOffset)
@@ -438,7 +443,7 @@ public abstract class Polity : ISynchronizable
         FactionCount--;
     }
 
-    public Faction GetFaction(Identifiable id)
+    public Faction GetFaction(Identifier id)
     {
         Faction faction;
 
@@ -491,7 +496,7 @@ public abstract class Polity : ISynchronizable
 
         if (faction != null)
         {
-            DominantFactionId = faction.Info.UniqueIdentifier;
+            DominantFactionId = faction.Info.Id;
 
             faction.SetDominant(true);
 
@@ -1073,12 +1078,7 @@ public abstract class Polity : ISynchronizable
         _contacts.Clear();
         LoadContacts();
 
-        FactionIds = new List<Identifier>(_factions.Count);
-
-        foreach (Identifiable key in _factions.Keys)
-        {
-            FactionIds.Add(key.UniqueIdentifier);
-        }
+        FactionIds = new List<Identifier>(_factions.Keys);
 
         // Reload factions to ensure order is equal to that in the save file
         _factions.Clear();
@@ -1087,7 +1087,7 @@ public abstract class Polity : ISynchronizable
         EventMessageIds = new List<long>(_eventMessageIds);
     }
 
-    private CellGroup GetGroupOrThrow(Identifiable id)
+    private CellGroup GetGroupOrThrow(Identifier id)
     {
         CellGroup group = World.GetGroup(id);
 
@@ -1100,7 +1100,7 @@ public abstract class Polity : ISynchronizable
         return group;
     }
 
-    private Faction GetFactionOrThrow(Identifiable id)
+    private Faction GetFactionOrThrow(Identifier id)
     {
         Faction faction = World.GetFaction(id);
 
@@ -1249,8 +1249,9 @@ public abstract class Polity : ISynchronizable
         float maxTargetValue = 1f;
         float minTargetValue = 0.8f * totalPolityProminenceValue;
 
-        float randomModifier =
-            groupCell.GetNextLocalRandomFloat(RngOffsets.POLITY_UPDATE_EFFECTS + unchecked(Info.GetHashCode()));
+        int rngOffset = RngOffsets.POLITY_UPDATE_EFFECTS + unchecked(GetHashCode());
+
+        float randomModifier = groupCell.GetNextLocalRandomFloat(rngOffset);
         randomModifier *= distanceFactor;
         float targetValue = ((maxTargetValue - minTargetValue) * randomModifier) + minTargetValue;
 

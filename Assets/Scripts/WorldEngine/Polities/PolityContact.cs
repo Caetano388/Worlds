@@ -22,7 +22,7 @@ public class PolityContact// : IKeyedValue<long>
 
 		Polity = polity;
 
-		Id = polity.Info.UniqueIdentifier;
+		Id = polity.Id;
 
 		GroupCount = initialGroupCount;
 	}

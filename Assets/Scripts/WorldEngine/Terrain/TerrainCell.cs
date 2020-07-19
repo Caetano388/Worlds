@@ -281,11 +281,11 @@ public class TerrainCell
         return Neighbors[TryGetNeighborDirection(offset)];
     }
 
-    public long GenerateInitId(long baseId = 0L)
+    public long GenerateInitId(long idOffset = 0L)
     {
         long id =
             (((Longitude * (long)Manager.WorldHeight) + Latitude) * Manager.PosIdOffset) +
-            (baseId % Manager.PosIdOffset);
+            (idOffset % Manager.PosIdOffset);
 
         return id;
     }

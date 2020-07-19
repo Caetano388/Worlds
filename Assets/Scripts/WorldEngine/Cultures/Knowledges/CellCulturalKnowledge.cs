@@ -317,7 +317,8 @@ public abstract class CellCulturalKnowledge : CulturalKnowledge
 
     protected void AddPolityProminenceEffectInternal(CulturalKnowledge polityKnowledge, PolityProminence polityProminence, long timeSpan, float timeEffectFactor)
     {
-        int rngOffset = RngOffsets.KNOWLEDGE_POLITY_PROMINENCE + InstanceRngOffset + unchecked((int)polityProminence.PolityId);
+        int rngOffset = RngOffsets.KNOWLEDGE_POLITY_PROMINENCE + InstanceRngOffset +
+            unchecked(polityProminence.Polity.GetHashCode());
 
         int targetValue = polityKnowledge.Value;
         float prominenceEffect = polityProminence.Value;

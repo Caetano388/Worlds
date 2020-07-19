@@ -16,7 +16,12 @@ public abstract class CellGroupEvent : WorldEvent
 
     }
 
-    public CellGroupEvent(CellGroup group, long triggerDate, long eventTypeId, long? id = null, long originalSpawnDate = -1) :
+    public CellGroupEvent(
+        CellGroup group,
+        long triggerDate,
+        long eventTypeId,
+        long? id = null,
+        long originalSpawnDate = -1) :
         base(
         group.World, 
         triggerDate, 
@@ -25,7 +30,7 @@ public abstract class CellGroupEvent : WorldEvent
         originalSpawnDate)
     {
         Group = group;
-        GroupId = Group.UniqueIdentifier;
+        GroupId = Group.Id;
 
 #if DEBUG
         GenerateDebugMessage(false);

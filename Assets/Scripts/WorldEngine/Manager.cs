@@ -97,11 +97,11 @@ public class Manager
 
     public class Debug_TracingData
     {
-        public Identifiable GroupId;
-        public Identifiable PolityId;
-        public Identifiable FactionId;
-        public Identifiable ClusterId;
-        public Identifiable RegionId;
+        public Identifier GroupId;
+        public Identifier PolityId;
+        public Identifier FactionId;
+        public Identifier ClusterId;
+        public Identifier RegionId;
         public int Longitude;
         public int Latitude;
         public int Priority;
@@ -3174,7 +3174,7 @@ public class Manager
 
             if (groupLanguage != null)
             {
-                Color languageColor = GenerateColorFromId(groupLanguage);
+                Color languageColor = GenerateColorFromId(groupLanguage.Id);
 
                 bool isLanguageBorder = IsLanguageBorder(groupLanguage, cell);
 
@@ -3259,7 +3259,7 @@ public class Manager
 
                 if (prominence.Cluster != null)
                 {
-                    color = GenerateColorFromId(prominence.Cluster);
+                    color = GenerateColorFromId(prominence.Cluster.Id);
                 }
             }
             else
@@ -3334,7 +3334,7 @@ public class Manager
         return color;
     }
 
-    private static Color GenerateColorFromId(Identifiable id)
+    private static Color GenerateColorFromId(Identifier id)
     {
         int mId = id.GetHashCode();
 

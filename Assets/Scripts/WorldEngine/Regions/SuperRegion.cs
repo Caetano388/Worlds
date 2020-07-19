@@ -22,7 +22,7 @@ public abstract class SuperRegion : Region
 
     public SuperRegion(TerrainCell originCell, Region startRegion, Language language)
     {
-        Info = new RegionInfo(this, originCell, startRegion.Info.GetHashCode(), language);
+        Info = new RegionInfo(this, originCell, startRegion.GetHashCode(), language);
     }
 
     private void RefreshCells()
@@ -86,7 +86,7 @@ public abstract class SuperRegion : Region
 
         foreach (Region region in _subRegions)
         {
-            SubRegionIds.Add(region.Info.UniqueIdentifier);
+            SubRegionIds.Add(region.Id);
         }
     }
 

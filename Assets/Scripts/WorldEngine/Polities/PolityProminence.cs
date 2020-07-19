@@ -34,7 +34,7 @@ public class PolityProminence// : IKeyedValue<Identifier>
     [XmlIgnore]
     public CellGroup Group;
 
-    public Identifiable Id => Group;
+    public Identifier Id => Group.Id;
 
     public PolityProminence()
     {
@@ -80,7 +80,7 @@ public class PolityProminence// : IKeyedValue<Identifier>
 
     public void Set(Polity polity, float value)
     {
-        PolityId = polity.UniqueIdentifier;
+        PolityId = polity.Info.Id;
         Polity = polity;
         Value = MathUtility.RoundToSixDecimals(value);
         NewValue = Value;

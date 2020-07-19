@@ -375,7 +375,7 @@ public class Culture : ISynchronizable
         LoadKnowledges();
 
         if (Language != null)
-            LanguageId = Language.UniqueIdentifier;
+            LanguageId = Language.Id;
 
         DiscoveryIds = new List<string>(Discoveries.Keys);
     }

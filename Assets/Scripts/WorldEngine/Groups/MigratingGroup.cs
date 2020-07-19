@@ -96,7 +96,7 @@ public class MigratingGroup : HumanGroup
         TargetCell = targetCell;
         SourceGroup = sourceGroup;
 
-        SourceGroupId = SourceGroup.UniqueIdentifier;
+        SourceGroupId = SourceGroup.Id;
 
         TargetCellLongitude = TargetCell.Longitude;
         TargetCellLatitude = TargetCell.Latitude;
@@ -289,9 +289,9 @@ public class MigratingGroup : HumanGroup
 
     public override void FinalizeLoad()
     {
-        MigrationDirection = (Direction)MigrationDirectionInt;
-
         base.FinalizeLoad();
+
+        MigrationDirection = (Direction)MigrationDirectionInt;
 
         TargetCell = World.TerrainCells[TargetCellLongitude][TargetCellLatitude];
 

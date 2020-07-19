@@ -3,7 +3,7 @@ using System.Collections;
 using System.Xml;
 using System.Xml.Serialization;
 
-public abstract class HumanGroup : Identifiable, ISynchronizable
+public abstract class HumanGroup : Identifiable
 {
     [XmlAttribute("MT")]
     public bool MigrationTagged;
@@ -22,12 +22,10 @@ public abstract class HumanGroup : Identifiable, ISynchronizable
         World = world;
     }
 
-    public virtual void Synchronize()
+    public override void FinalizeLoad()
     {
-    }
+        base.FinalizeLoad();
 
-    public virtual void FinalizeLoad()
-    {
         if (MigrationTagged)
         {
             World.MigrationTagGroup(this);

@@ -135,7 +135,7 @@ public class Name : ISynchronizable
     {
         World = world;
 
-        LanguageId = language.UniqueIdentifier;
+        LanguageId = language.Id;
         Language = language;
 
         TaggedMeaning = taggedMeaning;

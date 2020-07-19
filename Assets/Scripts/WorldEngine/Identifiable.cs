@@ -1,19 +1,18 @@
 ﻿using System.Xml.Serialization;
 
-public abstract class Identifiable
+public abstract class Identifiable : ISynchronizable
 {
     // This property is to be used exclusively for XML serialization.
     // It needs to be public. But consider it 'read-only protected' and don't access directly
-    [XmlAttribute("D")]
+    [XmlAttribute("ID")]
     public long InitDate;
 
     // This property is to be used exclusively for XML serialization.
     // It needs to be public. But consider it private and don't access it ever
-    [XmlAttribute("Id")]
-    public long InitId; 
+    [XmlAttribute("IId")]
+    public long InitId;
 
-    [XmlIgnore]
-    public Identifier _uniqueIdentifier = null;
+    protected Identifier _id = null;
 
     //NOTE: max long: 9,223,372,036,854,775,807
 
@@ -33,14 +32,15 @@ public abstract class Identifiable
 
     protected void Init(Identifiable identifiable)
     {
-        InitDate = identifiable.InitDate;
-        InitId = identifiable.InitId;
+        Init(identifiable.InitDate, identifiable.InitId);
     }
 
-    protected void Init(long date, long id)
+    protected virtual void Init(long date, long id)
     {
         InitDate = date;
         InitId = id;
+
+        _id = new Identifier(InitDate, InitId);
     }
 
     public override string ToString()
@@ -74,6 +74,13 @@ public abstract class Identifiable
         return hashCode;
     }
 
+    public abstract void Synchronize();
+
+    public virtual void FinalizeLoad()
+    {
+        _id = new Identifier(InitDate, InitId);
+    }
+
     public static bool operator ==(Identifiable left, Identifiable right)
     {
         return left.Equals(right);
@@ -84,15 +91,5 @@ public abstract class Identifiable
         return !(left == right);
     }
 
-    public virtual Identifier UniqueIdentifier
-    {
-        get {
-            if (_uniqueIdentifier == null)
-            {
-                _uniqueIdentifier = new Identifier(InitDate, InitId);
-            }
-
-            return _uniqueIdentifier;
-        }
-    }
+    public Identifier Id => _id;
 }

@@ -164,10 +164,10 @@ public class Clan : Faction
 
     protected override void GenerateName(Faction parentFaction)
     {
-        int rngOffset = RngOffsets.CLAN_GENERATE_NAME + unchecked(Polity.Info.GetHashCode());
+        int rngOffset = RngOffsets.CLAN_GENERATE_NAME + unchecked(Polity.GetHashCode());
 
         if (parentFaction != null)
-            rngOffset += unchecked(parentFaction.Info.GetHashCode());
+            rngOffset += unchecked(parentFaction.GetHashCode());
 
         GetRandomIntDelegate getRandomInt = (int maxValue) => Polity.GetNextLocalRandomInt(rngOffset++, maxValue);
         GetRandomFloatDelegate getRandomFloat = () => Polity.GetNextLocalRandomFloat(rngOffset++);
@@ -448,7 +448,7 @@ public class Clan : Faction
 
         float migrateCoreFactor = sourceFactor / (sourceFactor + targetFactor);
 
-        int offset = RngOffsets.MIGRATING_GROUP_MOVE_FACTION_CORE + unchecked(Info.GetHashCode());
+        int offset = RngOffsets.MIGRATING_GROUP_MOVE_FACTION_CORE + unchecked(GetHashCode());
 
         float randomValue = sourceGroup.GetNextLocalRandomFloat(offset);
 
@@ -475,7 +475,7 @@ public class Clan : Faction
     [Obsolete]
     public override void Split()
     {
-        int randomOffset = unchecked(RngOffsets.CLAN_SPLIT + Info.GetHashCode());
+        int randomOffset = unchecked(RngOffsets.CLAN_SPLIT + GetHashCode());
 
         float randomValue = GetNextLocalRandomFloat(randomOffset++);
         float splitFactionInfluence = _splitFactionMinInfluence + (randomValue * (_splitFactionMaxInfluence - _splitFactionMinInfluence));

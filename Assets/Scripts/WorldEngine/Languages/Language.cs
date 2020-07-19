@@ -6,7 +6,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using System.ComponentModel;
 
-public class Language : Identifiable, ISynchronizable
+public class Language : Identifiable
 {
     private class ParsedWord
     {
@@ -2764,7 +2764,7 @@ public class Language : Identifiable, ISynchronizable
         phrase.Meaning = newMeaning;
     }
 
-    public void Synchronize()
+    public override void Synchronize()
     {
         ArticlePropertiesInt = (int)_articleProperties;
         NounIndicativePropertiesInt = (int)_nounIndicativeProperties;
@@ -2813,8 +2813,10 @@ public class Language : Identifiable, ISynchronizable
         }
     }
 
-    public void FinalizeLoad()
+    public override void FinalizeLoad()
     {
+        base.FinalizeLoad();
+
         _getRandomFloat = GenerateGetRandomFloatDelegate("");
 
         _articleProperties = (GeneralArticleProperties)ArticlePropertiesInt;

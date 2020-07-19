@@ -20,15 +20,17 @@ public class ExpandPolityProminenceEvent : CellGroupEvent
         DoNotSerialize = true;
     }
 
-    public ExpandPolityProminenceEvent(CellGroup group, Polity polity, CellGroup targetGroup, long triggerDate) : base(group, triggerDate, ExpandPolityProminenceEventId)
+    public ExpandPolityProminenceEvent(
+        CellGroup group, Polity polity, CellGroup targetGroup, long triggerDate) :
+        base(group, triggerDate, ExpandPolityProminenceEventId)
     {
         Polity = polity;
 
-        PolityId = polity.Info.UniqueIdentifier;
+        PolityId = polity.Id;
 
         TargetGroup = targetGroup;
 
-        TargetGroupId = TargetGroup.UniqueIdentifier;
+        TargetGroupId = TargetGroup.Id;
 
         DoNotSerialize = true;
     }
@@ -147,10 +149,10 @@ public class ExpandPolityProminenceEvent : CellGroupEvent
     public void Reset(Polity polity, CellGroup targetGroup, long triggerDate)
     {
         TargetGroup = targetGroup;
-        TargetGroupId = TargetGroup.UniqueIdentifier;
+        TargetGroupId = TargetGroup.Id;
 
         Polity = polity;
-        PolityId = Polity.Info.UniqueIdentifier;
+        PolityId = Polity.Id;
 
         Reset(triggerDate);
     }
