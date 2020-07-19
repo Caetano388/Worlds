@@ -163,35 +163,35 @@ public class Language : Identifiable, ISynchronizable
     public int AdjectiveAdjunctionPropertiesInt;
     [XmlAttribute("NAP")]
     public int NounAdjunctionPropertiesInt;
-    
+
     public SyllableSet ArticleSyllables = new SyllableSet();
     public SyllableSet DerivativeArticleStartSyllables = new SyllableSet();
     public SyllableSet DerivativeArticleNextSyllables = new SyllableSet();
-    
+
     public SyllableSet NounIndicativeSyllables = new SyllableSet();
     public SyllableSet DerivativeNounIndicativeStartSyllables = new SyllableSet();
     public SyllableSet DerivativeNounIndicativeNextSyllables = new SyllableSet();
-    
+
     public SyllableSet VerbIndicativeSyllables = new SyllableSet();
     public SyllableSet DerivativeVerbIndicativeStartSyllables = new SyllableSet();
     public SyllableSet DerivativeVerbIndicativeNextSyllables = new SyllableSet();
-    
+
     public SyllableSet AdpositionStartSyllables = new SyllableSet();
     public SyllableSet AdpositionNextSyllables = new SyllableSet();
-    
+
     public SyllableSet AdjectiveStartSyllables = new SyllableSet();
     public SyllableSet AdjectiveNextSyllables = new SyllableSet();
-    
+
     public SyllableSet NounStartSyllables = new SyllableSet();
     public SyllableSet NounNextSyllables = new SyllableSet();
-    
+
     public SyllableSet VerbStartSyllables = new SyllableSet();
     public SyllableSet VerbNextSyllables = new SyllableSet();
-    
+
     public List<Morpheme> Articles;
     public List<Morpheme> NounIndicatives;
     public List<Morpheme> VerbIndicatives;
-    
+
     public List<Morpheme> Adpositions = new List<Morpheme>();
     public List<Morpheme> Adjectives = new List<Morpheme>();
     public List<Morpheme> Nouns = new List<Morpheme>();
@@ -268,7 +268,7 @@ public class Language : Identifiable, ISynchronizable
     {
         return GenerateMorpheme(syllables, syllables, 0, getRandomFloat);
     }
-    
+
     public static string GenerateMorpheme(
         SyllableSet startSyllables,
         SyllableSet nextSyllables,
@@ -1422,7 +1422,9 @@ public class Language : Identifiable, ISynchronizable
 
     private long GenerateSeed(string morpheme)
     {
-        return (long)Id.GetHashCode() + morpheme.GetHashCode();
+        long hashCode = 1805739105;
+        hashCode = hashCode * -1521134295 + GetHashCode();
+        return hashCode * -1521134295 + morpheme.GetHashCode();
     }
 
     private GetRandomIntDelegate GenerateGetRandomIntDelegate(string morpheme = "")
@@ -2233,7 +2235,7 @@ public class Language : Identifiable, ISynchronizable
         {
             translatedPhrase = Agglutinate(translatedPhrase);
         }
-        
+
         return translatedPhrase;
     }
 

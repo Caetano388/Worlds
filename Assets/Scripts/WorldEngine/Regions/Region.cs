@@ -61,45 +61,15 @@ public abstract class Region : ISynchronizable
     [XmlIgnore]
     public float WaterPercentage;
 
-    public Identifier UniqueIndentifier
-    {
-        get
-        {
-            return Info.UniqueIdentifier;
-        }
-    }
+    public Identifiable Id => Info;
 
-    public Name Name
-    {
-        get
-        {
-            return Info.Name;
-        }
-    }
+    public Name Name => Info.Name;
 
-    public Dictionary<string, RegionAttribute.Instance> Attributes
-    {
-        get
-        {
-            return Info.Attributes;
-        }
-    }
+    public Dictionary<string, RegionAttribute.Instance> Attributes => Info.Attributes;
 
-    public virtual List<Element.Instance> Elements
-    {
-        get
-        {
-            return Info.Elements;
-        }
-    }
+    public virtual List<Element.Instance> Elements => Info.Elements;
 
-    public World World
-    {
-        get
-        {
-            return Info.World;
-        }
-    }
+    public World World => Info.World;
 
     protected Dictionary<string, float> _biomePresences;
 

@@ -136,7 +136,8 @@ public enum GenerationType
 [XmlRoot]
 public class World : ISynchronizable
 {
-    public const long MaxSupportedDate = 9223372036L;
+    //public const long MaxSupportedDate = 9223372036L;
+    public const long MaxSupportedDate = long.MaxValue;
 
     public const int YearLength = 365;
 
@@ -386,8 +387,10 @@ public class World : ISynchronizable
     [XmlIgnore]
     public Dictionary<string, Discovery> ExistingDiscoveries = new Dictionary<string, Discovery>();
 
-    private Dictionary<long, FactionInfo> _factionInfos = new Dictionary<long, FactionInfo>();
-    private Dictionary<long, PolityInfo> _polityInfos = new Dictionary<long, PolityInfo>();
+    private Dictionary<Identifiable, FactionInfo> _factionInfos =
+        new Dictionary<Identifiable, FactionInfo>();
+    private Dictionary<Identifiable, PolityInfo> _polityInfos =
+        new Dictionary<Identifiable, PolityInfo>();
     private Dictionary<Identifiable, RegionInfo> _regionInfos =
         new Dictionary<Identifiable, RegionInfo>();
 
@@ -400,7 +403,7 @@ public class World : ISynchronizable
     private HashSet<string> _culturalSkillIdList = new HashSet<string>();
     private HashSet<string> _culturalKnowledgeIdList = new HashSet<string>();
 
-    private Dictionary<long, CellGroup> _cellGroups = new Dictionary<long, CellGroup>();
+    private Dictionary<Identifiable, CellGroup> _cellGroups = new Dictionary<Identifiable, CellGroup>();
 
     private HashSet<CellGroup> _updatedGroups = new HashSet<CellGroup>();
     private HashSet<CellGroup> _groupsToUpdate = new HashSet<CellGroup>();
@@ -1540,7 +1543,7 @@ public class World : ISynchronizable
 
         if (!group.SourceGroup.StillPresent)
         {
-            Debug.LogWarning("Sourcegroup is no longer present. Group Id: " + group.SourceGroup.Id);
+            Debug.LogWarning("Sourcegroup is no longer present. Group Id: " + group.SourceGroup);
         }
 
         // Source Group needs to be updated
@@ -1555,7 +1558,7 @@ public class World : ISynchronizable
 
     public void AddGroup(CellGroup group)
     {
-        _cellGroups.Add(group.Id, group);
+        _cellGroups.Add(group, group);
 
         Manager.AddUpdatedCell(group.Cell, CellUpdateType.GroupTerritoryClusterAndLanguage, CellUpdateSubType.AllButTerrain);
 
@@ -1564,14 +1567,14 @@ public class World : ISynchronizable
 
     public void RemoveGroup(CellGroup group)
     {
-        _cellGroups.Remove(group.Id);
+        _cellGroups.Remove(group);
 
         Manager.AddUpdatedCell(group.Cell, CellUpdateType.GroupTerritoryClusterAndLanguage, CellUpdateSubType.AllButTerrain);
 
         CellGroupCount--;
     }
 
-    public CellGroup GetGroup(long id)
+    public CellGroup GetGroup(Identifiable id)
     {
         CellGroup group;
 
@@ -1591,7 +1594,7 @@ public class World : ISynchronizable
 #if DEBUG
         if ((Manager.RegisterDebugEvent != null) && (Manager.TracingData.Priority <= 1))
         {
-            if (group.Id == Manager.TracingData.GroupId)
+            if (group == Manager.TracingData.GroupId)
             {
                 System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
 
@@ -1603,7 +1606,7 @@ public class World : ISynchronizable
                 string callingMethod2 = method.Name;
                 string callingClass2 = method.DeclaringType.ToString();
 
-                string groupId = "Id:" + group.Id + "|Long:" + group.Longitude + "|Lat:" + group.Latitude;
+                string groupId = "Id: " + group + " Pos: " + group.Position;
 
                 SaveLoadTest.DebugMessage debugMessage = new SaveLoadTest.DebugMessage(
                     "AddGroupToUpdate - Group:" + groupId,
@@ -1631,12 +1634,14 @@ public class World : ISynchronizable
 
         if (GroupsHaveBeenUpdated)
         {
-            Debug.LogWarning("Trying to add group to update after groups have already been updated this iteration. Id: " + group.Id);
+            Debug.LogWarning(
+                "Trying to add group to update after groups have already been updated this iteration. Id: " +
+                group);
         }
 
         if (!group.StillPresent)
         {
-            Debug.LogWarning("Group to update is no longer present. Id: " + group.Id);
+            Debug.LogWarning("Group to update is no longer present. Id: " + group);
         }
 
         _groupsToUpdate.Add(group);
@@ -1705,12 +1710,12 @@ public class World : ISynchronizable
 
     public void AddFactionInfo(FactionInfo factionInfo)
     {
-        _factionInfos.Add(factionInfo.Id, factionInfo);
+        _factionInfos.Add(factionInfo, factionInfo);
 
         FactionCount++;
     }
 
-    public FactionInfo GetFactionInfo(long id)
+    public FactionInfo GetFactionInfo(Identifiable id)
     {
         FactionInfo factionInfo = null;
 
@@ -1719,7 +1724,7 @@ public class World : ISynchronizable
         return factionInfo;
     }
 
-    public Faction GetFaction(long id)
+    public Faction GetFaction(Identifiable id)
     {
         FactionInfo factionInfo;
 
@@ -1731,7 +1736,7 @@ public class World : ISynchronizable
         return factionInfo.Faction;
     }
 
-    public bool ContainsFactionInfo(long id)
+    public bool ContainsFactionInfo(Identifiable id)
     {
         return _factionInfos.ContainsKey(id);
     }
@@ -1814,9 +1819,9 @@ public class World : ISynchronizable
         PolityCount++;
     }
 
-    public void AddPolityInfo(PolityInfo polityInfo)
+    public void AddPolityInfo(PolityInfo info)
     {
-        _polityInfos.Add(polityInfo.Id, polityInfo);
+        _polityInfos.Add(info, info);
 
         PolityCount++;
     }
@@ -1826,7 +1831,7 @@ public class World : ISynchronizable
         return _polityInfos.Values;
     }
 
-    public PolityInfo GetPolityInfo(long id)
+    public PolityInfo GetPolityInfo(Identifiable id)
     {
         if (!_polityInfos.TryGetValue(id, out PolityInfo polityInfo))
         {
@@ -1836,7 +1841,7 @@ public class World : ISynchronizable
         return polityInfo;
     }
 
-    public Polity GetPolity(long id)
+    public Polity GetPolity(Identifiable id)
     {
         if (!_polityInfos.TryGetValue(id, out PolityInfo polityInfo))
         {
@@ -1992,7 +1997,7 @@ public class World : ISynchronizable
     {
         foreach (PolityInfo pInfo in PolityInfos)
         {
-            _polityInfos.Add(pInfo.Id, pInfo);
+            _polityInfos.Add(pInfo, pInfo);
         }
 
 #if DEBUG
@@ -2004,7 +2009,7 @@ public class World : ISynchronizable
     {
         foreach (FactionInfo fInfo in FactionInfos)
         {
-            _factionInfos.Add(fInfo.Id, fInfo);
+            _factionInfos.Add(fInfo, fInfo);
         }
 
 #if DEBUG
@@ -2081,7 +2086,7 @@ public class World : ISynchronizable
             g.World = this;
             g.PrefinalizeLoad();
 
-            _cellGroups.Add(g.Id, g);
+            _cellGroups.Add(g, g);
         }
 
         // Segment 2

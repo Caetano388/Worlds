@@ -5,20 +5,16 @@ using System.Xml;
 using System.Xml.Serialization;
 using UnityEngine.Profiling;
 
-public class FactionInfo : ISynchronizable, IKeyedValue<long>
+public class FactionInfo : Identifiable, ISynchronizable, IKeyedValue<long>
 {
-    [XmlAttribute("D")]
-    public long FormationDate = -1;
-
     [XmlAttribute("T")]
     public string Type;
-
-    [XmlAttribute]
-    public long Id;
 
     public Name Name = null;
 
     public Faction Faction;
+
+    public long FormationDate => InitDate;
 
     private string _nameFormat;
 
@@ -27,7 +23,8 @@ public class FactionInfo : ISynchronizable, IKeyedValue<long>
 
     }
 
-    public FactionInfo(string type, long id, Faction faction)
+    public FactionInfo(string type, long formationDate, long initId, Faction faction) :
+        base (formationDate, initId)
     {
         Type = type;
         Id = id;

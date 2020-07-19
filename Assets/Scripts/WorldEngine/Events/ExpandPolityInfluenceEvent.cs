@@ -7,10 +7,8 @@ using UnityEngine.Profiling;
 
 public class ExpandPolityProminenceEvent : CellGroupEvent
 {
-    [XmlAttribute("TGrpId")]
-    public long TargetGroupId;
-    [XmlAttribute("PolId")]
-    public long PolityId;
+    public Identifier TargetGroupId;
+    public Identifier PolityId;
 
     [XmlIgnore]
     public CellGroup TargetGroup;
@@ -26,11 +24,11 @@ public class ExpandPolityProminenceEvent : CellGroupEvent
     {
         Polity = polity;
 
-        PolityId = polity.Id;
+        PolityId = polity.Info.UniqueIdentifier;
 
         TargetGroup = targetGroup;
 
-        TargetGroupId = TargetGroup.Id;
+        TargetGroupId = TargetGroup.UniqueIdentifier;
 
         DoNotSerialize = true;
     }
@@ -149,10 +147,10 @@ public class ExpandPolityProminenceEvent : CellGroupEvent
     public void Reset(Polity polity, CellGroup targetGroup, long triggerDate)
     {
         TargetGroup = targetGroup;
-        TargetGroupId = TargetGroup.Id;
+        TargetGroupId = TargetGroup.UniqueIdentifier;
 
         Polity = polity;
-        PolityId = Polity.Id;
+        PolityId = Polity.Info.UniqueIdentifier;
 
         Reset(triggerDate);
     }

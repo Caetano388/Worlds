@@ -100,7 +100,7 @@ public static class NameTools
 public class Name : ISynchronizable
 {
     [XmlAttribute("Lid")]
-    public UniqueIdentifier LanguageId;
+    public Identifier LanguageId;
 
     [XmlAttribute("Tm")]
     public string TaggedMeaning;
@@ -135,7 +135,7 @@ public class Name : ISynchronizable
     {
         World = world;
 
-        LanguageId = language.Id;
+        LanguageId = language.UniqueIdentifier;
         Language = language;
 
         TaggedMeaning = taggedMeaning;

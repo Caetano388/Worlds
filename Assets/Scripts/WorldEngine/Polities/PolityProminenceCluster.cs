@@ -21,32 +21,29 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
     [XmlAttribute("NC")]
     public bool NeedsNewCensus = true;
 
-    public List<long> ProminenceIds = null;
+    public List<Identifier> ProminenceIds = null;
 
     [XmlIgnore]
     public Polity Polity;
+
+    private int _rngOffset;
 
 #if DEBUG
     [XmlIgnore]
     public long LastProminenceChangeDate = -1;
 #endif
 
-    public int Size
-    {
-        get
-        {
-            return _prominences.Count;
-        }
-    }
+    public int Size => _prominences.Count;
 
-    private Dictionary<long, PolityProminence> _prominences = new Dictionary<long, PolityProminence>();
+    private Dictionary<Identifiable, PolityProminence> _prominences =
+        new Dictionary<Identifiable, PolityProminence>();
 
     public PolityProminenceCluster()
     {
     }
 
     public PolityProminenceCluster(PolityProminence startProminence) :
-        base(startProminence.Group.InitDate, startProminence.Group.Id)
+        base(startProminence.Group)
     {
         Polity = startProminence.Polity;
 
@@ -182,7 +179,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     public bool HasPolityProminence(CellGroup group)
     {
-        return _prominences.ContainsKey(group.Id);
+        return _prominences.ContainsKey(group);
     }
 
     public ICollection<PolityProminence> GetPolityProminences()
@@ -192,19 +189,17 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     public PolityProminence GetPolityProminence(CellGroup group)
     {
-        if (_prominences.ContainsKey(group.Id))
+        if (_prominences.ContainsKey(group))
         {
-            return _prominences[group.Id];
+            return _prominences[group];
         }
 
         return null;
     }
 
-    private int _rngOffset;
-
     private int GetNextLocalRandomInt(int maxValue)
     {
-        return Polity.GetNextLocalRandomInt(unchecked((int)Id) + _rngOffset, maxValue);
+        return Polity.GetNextLocalRandomInt(GetHashCode() + _rngOffset, maxValue);
     }
 
     public PolityProminence GetRandomProminence(int rngOffset)
@@ -262,7 +257,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
                 if (HasPolityProminence(nGroup))
                 {
-                    PolityProminence prominenceToAdd = _prominences[nGroup.Id];
+                    PolityProminence prominenceToAdd = _prominences[nGroup];
 
                     RemoveProminence(prominenceToAdd);
                     splitCluster.AddProminence(prominenceToAdd);
@@ -289,7 +284,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
         return splitCluster;
     }
 
-    private PolityProminence GetProminenceOrThrow(long id)
+    private PolityProminence GetProminenceOrThrow(Identifiable id)
     {
         CellGroup group = Polity.World.GetGroup(id);
 
@@ -312,7 +307,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     private void LoadProminences()
     {
-        foreach (long id in ProminenceIds)
+        foreach (Identifier id in ProminenceIds)
         {
             _prominences.Add(id, GetProminenceOrThrow(id));
         }
@@ -322,7 +317,7 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
     {
         LoadProminences();
 
-        foreach (KeyValuePair<long, PolityProminence> pair in _prominences)
+        foreach (KeyValuePair<Identifiable, PolityProminence> pair in _prominences)
         {
             PolityProminence p = pair.Value;
 
@@ -334,7 +329,12 @@ public class PolityProminenceCluster : Identifiable, ISynchronizable
 
     public void Synchronize()
     {
-        ProminenceIds = new List<long>(_prominences.Keys);
+        ProminenceIds = new List<Identifier>(_prominences.Count);
+
+        foreach (Identifiable key in _prominences.Keys)
+        {
+            ProminenceIds.Add(key.UniqueIdentifier);
+        }
 
         // Reload prominences to make sure they are ordered as in the save file
         _prominences.Clear();

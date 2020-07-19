@@ -8,7 +8,7 @@ using UnityEngine.Profiling;
 
 public class CellGroupSnapshot
 {
-    public long Id;
+    public Identifier Id;
 
     public bool HasMigrationEvent;
     public long MigrationEventDate;
@@ -17,15 +17,15 @@ public class CellGroupSnapshot
 
     public bool HasPolityExpansionEvent;
     public long PolityExpansionEventDate;
-    public long ExpansionTargetGroupId;
-    public long ExpandingPolityId;
+    public Identifier ExpansionTargetGroupId;
+    public Identifier ExpandingPolityId;
 
     public bool HasTribeFormationEvent;
     public long TribeFormationEventDate;
 
     public CellGroupSnapshot(CellGroup c)
     {
-        Id = c.Id;
+        Id = c.UniqueIdentifier;
 
         HasMigrationEvent = c.HasMigrationEvent;
         MigrationEventDate = c.MigrationEventDate;

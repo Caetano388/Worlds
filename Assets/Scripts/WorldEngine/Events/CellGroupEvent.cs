@@ -6,8 +6,7 @@ using System.Xml.Serialization;
 
 public abstract class CellGroupEvent : WorldEvent
 {
-    [XmlAttribute("GId")]
-    public long GroupId;
+    public Identifier GroupId;
 
     [XmlIgnore]
     public CellGroup Group;
@@ -26,7 +25,7 @@ public abstract class CellGroupEvent : WorldEvent
         originalSpawnDate)
     {
         Group = group;
-        GroupId = Group.Id;
+        GroupId = Group.UniqueIdentifier;
 
 #if DEBUG
         GenerateDebugMessage(false);
@@ -56,7 +55,7 @@ public abstract class CellGroupEvent : WorldEvent
         if ((Manager.RegisterDebugEvent != null) && (Manager.TracingData.Priority <= 0))
         {
             //			if (Group.Id == Manager.TracingData.GroupId) {
-            string groupId = "Id:" + Group.Id + "|Long:" + Group.Longitude + "|Lat:" + Group.Latitude;
+            string groupId = "Id: " + Group + " Pos: " + Group.Position;
 
             SaveLoadTest.DebugMessage debugMessage = new SaveLoadTest.DebugMessage("CellGroupEvent - Group:" + groupId + ", Type: " + this.GetType(),
                 "SpawnDate: " + SpawnDate +

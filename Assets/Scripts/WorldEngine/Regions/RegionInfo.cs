@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using System.Linq;
 
-public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiable>
+public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifier>
 {
     public Identifier LanguageUId;
 
@@ -34,7 +34,7 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiabl
 
     [XmlIgnore]
     public TerrainCell OriginCell;
-    
+
     public Name Name
     {
         get
@@ -57,12 +57,15 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiabl
 
     }
 
-    public RegionInfo(long date, long id, Region region, TerrainCell originCell, Language language)
-        : base(date, id)
+    public RegionInfo(
+        Region region,
+        TerrainCell originCell,
+        long baseId,
+        Language language)
     {
         World = originCell.World;
 
-        //Id = originCell.GenerateUniqueIdentifier(EstablishmentDate, baseId);
+        Init(World.CurrentDate, originCell.GenerateInitId(baseId));
 
         Region = region;
 
@@ -179,27 +182,27 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiabl
             untranslatedName += attributeNoun;
         }
 
-//#if DEBUG
-//        if ((Manager.RegisterDebugEvent != null) && (Manager.TracingData.Priority <= 0))
-//        {
-//            //if (Manager.TracingData.RegionId == Id)
-//            //{
-//            SaveLoadTest.DebugMessage debugMessage = new SaveLoadTest.DebugMessage(
-//                "RegionInfo.GetRandomUnstranslatedAreaName - Region.Id:" + Id,
-//                "CurrentDate: " + World.CurrentDate +
-//                ", EstablishmentDate: " + EstablishmentDate +
-//                ", attribute.Name: " + attribute.Name +
-//                ", Attributes.Count: " + Attributes.Count +
-//                ", AttributeNames: [" + string.Join(",", AttributeNames.ToArray()) + "]" +
-//                ", nullAdjectives: " + nullAdjectives +
-//                ", possibleAdjectives: [" + string.Join(",", possibleAdjectives) + "]" +
-//                ", untranslatedName: " + untranslatedName +
-//                "");
+        //#if DEBUG
+        //        if ((Manager.RegisterDebugEvent != null) && (Manager.TracingData.Priority <= 0))
+        //        {
+        //            //if (Manager.TracingData.RegionId == Id)
+        //            //{
+        //            SaveLoadTest.DebugMessage debugMessage = new SaveLoadTest.DebugMessage(
+        //                "RegionInfo.GetRandomUnstranslatedAreaName - Region.Id:" + Id,
+        //                "CurrentDate: " + World.CurrentDate +
+        //                ", EstablishmentDate: " + EstablishmentDate +
+        //                ", attribute.Name: " + attribute.Name +
+        //                ", Attributes.Count: " + Attributes.Count +
+        //                ", AttributeNames: [" + string.Join(",", AttributeNames.ToArray()) + "]" +
+        //                ", nullAdjectives: " + nullAdjectives +
+        //                ", possibleAdjectives: [" + string.Join(",", possibleAdjectives) + "]" +
+        //                ", untranslatedName: " + untranslatedName +
+        //                "");
 
-//            Manager.RegisterDebugEvent("DebugMessage", debugMessage);
-//            //}
-//        }
-//#endif
+        //            Manager.RegisterDebugEvent("DebugMessage", debugMessage);
+        //            //}
+        //        }
+        //#endif
 
         return untranslatedName;
     }
@@ -216,7 +219,7 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiabl
 
     private void GenerateName()
     {
-        _rngOffset = RngOffsets.REGION_GENERATE_NAME + unchecked(Language.Id.GetHashCode());
+        _rngOffset = RngOffsets.REGION_GENERATE_NAME + unchecked(Language.GetHashCode());
 
         string untranslatedName;
 
@@ -290,7 +293,7 @@ public class RegionInfo : Identifiable, ISynchronizable, IKeyedValue<Identifiabl
         _name = new Name(untranslatedName, Language, World);
     }
 
-    public Identifiable GetKey()
+    public Identifier GetKey()
     {
         return UniqueIdentifier;
     }

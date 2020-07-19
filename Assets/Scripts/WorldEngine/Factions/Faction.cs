@@ -9,12 +9,6 @@ using System;
 [XmlInclude(typeof(Clan))]
 public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 {
-    [XmlAttribute("PolId")]
-    public long PolityId;
-
-    [XmlAttribute("CGrpId")]
-    public long CoreGroupId;
-
     [XmlAttribute("Inf")]
     public float InfluenceInternal;
 
@@ -54,6 +48,9 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 
     [XmlAttribute("IsCon")]
     public bool IsUnderPlayerGuidance = false;
+
+    public Identifier PolityId;
+    public Identifier CoreGroupId;
 
     [XmlIgnore]
     public bool IsBeingUpdated = false;
@@ -101,7 +98,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 
     public string Type => Info.Type;
 
-    public long Id => Info.Id;
+    public Identifiable Id => Info;
 
     public long FormationDate => Info.FormationDate;
 
@@ -156,15 +153,15 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
             idOffset = parentFaction.Id + 1;
         }
 
-        PolityId = polity.Id;
+        PolityId = polity.Info.UniqueIdentifier;
         Polity = polity;
 
         CoreGroup = coreGroup;
-        CoreGroupId = coreGroup.Id;
+        CoreGroupId = coreGroup.UniqueIdentifier;
 
         long id = GenerateUniqueIdentifier(World.CurrentDate, 100L, idOffset);
 
-        Info = new FactionInfo(type, id, this);
+        Info = new FactionInfo(type, World.CurrentDate, id, this);
 
         Culture = new FactionCulture(this);
 
@@ -437,7 +434,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         {
             throw new Exception(
                 "highestPolityProminence is null - Faction Id: " + Id +
-                ", Group Id: " + newFactionCoreGroup.Id);
+                ", Group Id: " + newFactionCoreGroup);
         }
 
         if (CurrentLeader == null)
@@ -514,34 +511,34 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
 
         Profiler.BeginSample("Faction - PreUpdate");
 
-//#if DEBUG
-//        if ((Manager.RegisterDebugEvent != null) && (Manager.TracingData.Priority <= 0))
-//        {
-//            if (Manager.TracingData.FactionId == Id)
-//            {
-//                System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
+        //#if DEBUG
+        //        if ((Manager.RegisterDebugEvent != null) && (Manager.TracingData.Priority <= 0))
+        //        {
+        //            if (Manager.TracingData.FactionId == Id)
+        //            {
+        //                System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
 
-//                System.Reflection.MethodBase method = stackTrace.GetFrame(1).GetMethod();
-//                string callingMethod = method.Name;
-//                string callingClass = method.DeclaringType.ToString();
+        //                System.Reflection.MethodBase method = stackTrace.GetFrame(1).GetMethod();
+        //                string callingMethod = method.Name;
+        //                string callingClass = method.DeclaringType.ToString();
 
-//                int knowledgeValue = 0;
+        //                int knowledgeValue = 0;
 
-//                Culture.TryGetKnowledgeValue(SocialOrganizationKnowledge.KnowledgeId, out knowledgeValue);
+        //                Culture.TryGetKnowledgeValue(SocialOrganizationKnowledge.KnowledgeId, out knowledgeValue);
 
-//                SaveLoadTest.DebugMessage debugMessage = new SaveLoadTest.DebugMessage(
-//                    "Faction:PreUpdate - Faction Id:" + Id,
-//                    "CurrentDate: " + World.CurrentDate +
-//                    ", Polity.Id: " + Polity.Id +
-//                    ", preupdated: " + _preupdated +
-//                    ", Social organization knowledge value: " + knowledgeValue +
-//                    ", Calling method: " + callingClass + "." + callingMethod +
-//                    "");
+        //                SaveLoadTest.DebugMessage debugMessage = new SaveLoadTest.DebugMessage(
+        //                    "Faction:PreUpdate - Faction Id:" + Id,
+        //                    "CurrentDate: " + World.CurrentDate +
+        //                    ", Polity.Id: " + Polity.Id +
+        //                    ", preupdated: " + _preupdated +
+        //                    ", Social organization knowledge value: " + knowledgeValue +
+        //                    ", Calling method: " + callingClass + "." + callingMethod +
+        //                    "");
 
-//                Manager.RegisterDebugEvent("DebugMessage", debugMessage);
-//            }
-//        }
-//#endif
+        //                Manager.RegisterDebugEvent("DebugMessage", debugMessage);
+        //            }
+        //        }
+        //#endif
 
         if (World.FactionsHaveBeenUpdated && !IsBeingUpdated)
         {
@@ -620,7 +617,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         CoreGroup.RemoveFactionCore(this);
 
         CoreGroup = NewCoreGroup;
-        CoreGroupId = NewCoreGroup.Id;
+        CoreGroupId = NewCoreGroup.UniqueIdentifier;
 
         CoreGroup.AddFactionCore(this);
 
@@ -755,7 +752,7 @@ public abstract class Faction : ISynchronizable, IWorldDateGetter, IFlagHolder
         Polity.RemoveFaction(this);
 
         Polity = targetPolity;
-        PolityId = Polity.Id;
+        PolityId = Polity.Info.UniqueIdentifier;
         Influence = targetInfluence;
 
         targetPolity.AddFaction(this);

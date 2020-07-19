@@ -47,10 +47,10 @@ public class Agent : ISynchronizable
     public bool StillPresent = true;
 
     [XmlAttribute("LanId")]
-    public long LanguageId;
+    public Identifier LanguageId;
 
     [XmlAttribute("RenId")]
-    public long BirthRegionInfoId;
+    public Identifier BirthRegionInfoId;
 
     public WorldPosition BirthCellPosition;
 
@@ -130,14 +130,14 @@ public class Agent : ISynchronizable
         BirthCellPosition = BirthCell.Position;
 
         BirthRegionInfo = BirthCell.Region.Info;
-        BirthRegionInfoId = BirthRegionInfo.Id;
+        BirthRegionInfoId = BirthRegionInfo.UniqueIdentifier;
 
         Language = birthGroup.Culture.Language;
-        LanguageId = Language.Id;
+        LanguageId = Language.UniqueIdentifier;
 
         BirthDate = birthDate;
 
-        idOffset += birthGroup.Id;
+        idOffset += birthGroup.GetHashCode();
 
         Profiler.BeginSample("new Agent - GenerateUniqueIdentifier");
 
@@ -189,10 +189,10 @@ public class Agent : ISynchronizable
         }
         else
         {
-            string article = 
+            string article =
                 ((association.Form == AssociationForms.DefiniteSingular) ||
                 (association.Form == AssociationForms.DefinitePlural) ||
-                (association.Form == AssociationForms.NameSingular)) ? 
+                (association.Form == AssociationForms.NameSingular)) ?
                 "the " : "";
 
             string uncountableProp = (association.Form == AssociationForms.Uncountable) ? "[un]" : "";
@@ -238,10 +238,10 @@ public class Agent : ISynchronizable
         }
         else
         {
-            string article = 
+            string article =
                 ((association.Form == AssociationForms.DefiniteSingular) ||
                 (association.Form == AssociationForms.DefinitePlural) ||
-                (association.Form == AssociationForms.NameSingular)) ? 
+                (association.Form == AssociationForms.NameSingular)) ?
                 "the " : "";
 
             string uncountableProp = (association.Form == AssociationForms.Uncountable) ? "[un]" : "";

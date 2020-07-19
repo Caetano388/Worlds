@@ -97,11 +97,11 @@ public class Manager
 
     public class Debug_TracingData
     {
-        public long GroupId;
-        public long PolityId;
-        public long FactionId;
-        public long ClusterId;
-        public long RegionId;
+        public Identifiable GroupId;
+        public Identifiable PolityId;
+        public Identifiable FactionId;
+        public Identifiable ClusterId;
+        public Identifiable RegionId;
         public int Longitude;
         public int Latitude;
         public int Priority;
@@ -261,14 +261,14 @@ public class Manager
     private ProgressCastDelegate _progressCastMethod = null;
 
     private World _currentWorld = null;
-    
+
     private Texture2D _currentMapTexture = null;
     private Texture2D _currentMapOverlayTexture = null;
     private Texture2D _currentMapActivityTexture = null;
     private Texture2D _currentMapOverlayShaderInfoTexture = null;
 
     private Texture2D _pointerOverlayTexture = null;
-    
+
     private Color32[] _currentMapTextureColors = null;
     private Color32[] _currentMapOverlayTextureColors = null;
     private Color32[] _currentMapOverlayShaderInfoColor = null;
@@ -449,7 +449,7 @@ public class Manager
     public static void SetLayerSettings(List<LayerSettings> layerSettings)
     {
         ResetLayerSettings();
-        
+
         foreach (LayerSettings settings in layerSettings)
         {
             LayerSettings.Add(settings.Id, settings);
@@ -625,8 +625,8 @@ public class Manager
             buildType = "Release";
         }
 
-        _debugLogStream.WriteLine("Running Worlds " + Application.version + 
-            " (" + Application.platform + " " + buildType  + ")...");
+        _debugLogStream.WriteLine("Running Worlds " + Application.version +
+            " (" + Application.platform + " " + buildType + ")...");
         _debugLogStream.Flush();
     }
 
@@ -666,7 +666,7 @@ public class Manager
             stackTrace = stackTrace.Replace("\r\n", "\n").Replace("\n\r", "\n").Replace("\r", "\n").Replace("\n", "\n\t");
             _debugLogStream.WriteLine("\t" + stackTrace);
         }
-        
+
         _debugLogStream.Flush();
     }
 
@@ -732,7 +732,7 @@ public class Manager
         return string.Format("{0} years, {1} days", years, days);
     }
 
-    public static string AddDateToWorldName (string worldName)
+    public static string AddDateToWorldName(string worldName)
     {
         long year = CurrentWorld.CurrentDate / World.YearLength;
         int day = (int)(CurrentWorld.CurrentDate % World.YearLength);
@@ -941,7 +941,7 @@ public class Manager
         Texture2D mapTexture = _manager._currentMapTexture;
         Texture2D overlayTexture = _manager._currentMapOverlayTexture;
         Texture2D exportTexture = null;
-        
+
         // Enqueue (and wait for) the operations that need to be executed in the 3D engine's main thread
         EnqueueTaskAndWait(() =>
         {
@@ -1301,7 +1301,7 @@ public class Manager
         world.StartReinitialization(0f, 1.0f);
         world.Regenerate(type);
         world.FinishInitialization();
-        
+
         _manager._currentCellSlants = new float?[world.Width, world.Height];
         _manager._currentMaxUpdateSpan = 0;
 
@@ -1451,11 +1451,11 @@ public class Manager
             progressCastMethod = _manager._progressCastMethod;
 
         ResetWorldLoadTrack();
-        
+
         World world;
 
         XmlSerializer serializer = new XmlSerializer(typeof(World), _manager.AttributeOverrides);
-        
+
         using (FileStream stream = new FileStream(path, FileMode.Open))
         {
             world = serializer.Deserialize(stream) as World;
@@ -1768,7 +1768,7 @@ public class Manager
         }
     }
 
-	public static void SetSelectedCell(TerrainCell cell)
+    public static void SetSelectedCell(TerrainCell cell)
     {
         if (CurrentWorld.SelectedCell != null)
         {
@@ -1894,7 +1894,7 @@ public class Manager
 
                 int jDiff = j - centerY;
                 int iRadius = (int)MathUtility.GetComponent(fRadius, jDiff);
-                
+
                 int offsetI = centerX - iRadius;
                 mOffsetI = (mOffsetI + offsetI + sizeX) % sizeX; // make sure the brush wraps around the x-axis and account for radial y-axis wraps
                 int iDiameter = 1 + (iRadius * 2);
@@ -2043,7 +2043,7 @@ public class Manager
         float strength = EditorBrushStrength / AltitudeScale;
         float noiseRadius = BrushNoiseRadiusFactor / (float)EditorBrushRadius;
 
-        float strToValue = BrushStrengthFactor_Base * BrushStrengthFactor_Altitude * 
+        float strToValue = BrushStrengthFactor_Base * BrushStrengthFactor_Altitude *
             (MathUtility.GetPseudoNormalDistribution(distanceFactor * 2) - MathUtility.NormalAt2) / (MathUtility.NormalAt0 - MathUtility.NormalAt2);
         float valueOffset = strength * strToValue;
 
@@ -2070,10 +2070,10 @@ public class Manager
         TerrainCell cellSouth = CurrentWorld.GetCellWithSphericalWrap(longitude, latitude + sampleRadius);
         TerrainCell cellWest = CurrentWorld.GetCellWithSphericalWrap(longitude - sampleRadius, latitude);
 
-        float targetValue = 
-            (cellNorth.BaseAltitudeValue + 
-            cellEast.BaseAltitudeValue + 
-            cellSouth.BaseAltitudeValue + 
+        float targetValue =
+            (cellNorth.BaseAltitudeValue +
+            cellEast.BaseAltitudeValue +
+            cellSouth.BaseAltitudeValue +
             cellWest.BaseAltitudeValue) / 4f;
 
         float currentValue = cell.BaseAltitudeValue;
@@ -2352,7 +2352,7 @@ public class Manager
     public static void UpdateMapOverlayShaderTextureColors()
     {
         Color32[] overlayShaderInfoColors = _manager._currentMapOverlayShaderInfoColor;
-        
+
         foreach (TerrainCell cell in UpdatedCells)
         {
             UpdateMapOverlayShaderTextureColorsFromCell(overlayShaderInfoColors, cell);
@@ -2661,7 +2661,7 @@ public class Manager
     public static void GenerateMapOverlayTextureFromWorld(World world)
     {
         GenerateTextureColorsFromWorld(world, GenerateOverlayColorFromTerrainCell, out Color32[] textureColors, out Texture2D texture);
-        
+
         _manager._currentMapOverlayTextureColors = textureColors;
         _manager._currentMapOverlayTexture = texture;
     }
@@ -2669,7 +2669,7 @@ public class Manager
     public static void GenerateMapActivityTextureFromWorld(World world)
     {
         GenerateTextureColorsFromWorld(world, GenerateActivityColorFromTerrainCell, out Color32[] textureColors, out Texture2D texture);
-        
+
         _manager._currentMapActivityTextureColors = textureColors;
         _manager._currentMapActivityTexture = texture;
     }
@@ -2677,7 +2677,7 @@ public class Manager
     public static void GenerateMapOverlayShaderInfoTextureFromWorld(World world)
     {
         GenerateTextureColorsFromWorld(world, GenerateOverlayShaderInfoFromTerrainCell, out Color32[] textureColors, out Texture2D texture);
-        
+
         _manager._currentMapOverlayShaderInfoColor = textureColors;
         _manager._currentMapOverlayShaderInfoTexture = texture;
     }
@@ -2977,7 +2977,7 @@ public class Manager
                 return color;
             }
         }
-        
+
         if (CellShouldBeHighlighted(cell))
         {
             return Color.white * 0.75f;
@@ -3127,8 +3127,8 @@ public class Manager
 
         if (region != null)
         {
-            Color regionColor = GenerateColorFromId(region.Info);
-            
+            Color regionColor = GenerateColorFromId(region.Id);
+
             Biome mostPresentBiome = Biome.Biomes[region.BiomeWithMostPresence];
             regionColor = mostPresentBiome.Color * 0.85f + regionColor * 0.15f;
 
@@ -3159,7 +3159,7 @@ public class Manager
             if (nLanguage == null)
                 return true;
 
-            if (nLanguage.Id != language.Id)
+            if (nLanguage != language)
                 return true;
         }
 
@@ -3259,7 +3259,7 @@ public class Manager
 
                 if (prominence.Cluster != null)
                 {
-                    color = GenerateColorFromId(prominence.Cluster.Id);
+                    color = GenerateColorFromId(prominence.Cluster);
                 }
             }
             else
@@ -3403,7 +3403,7 @@ public class Manager
     {
         if (cell.Group == null)
             return color;
-        
+
         Territory territory = cell.EncompassingTerritory;
 
         if (territory == null)
@@ -3562,7 +3562,7 @@ public class Manager
     {
         if (_planetOverlaySubtype == "None")
             return color;
-        
+
         if (cell.Group != null)
         {
             if ((cell.Group.Population > 0) &&
@@ -3571,7 +3571,7 @@ public class Manager
                 color = GetPopCulturalAttributeOverlayColor(preference.Value);
             }
         }
-        
+
         return color;
     }
 
@@ -3594,7 +3594,7 @@ public class Manager
             return GetUnincorporatedGroupColor();
 
         color = GetPolityCulturalAttributeOverlayColor(preference.Value, IsTerritoryBorder(territory, cell));
-        
+
         return color;
     }
 
@@ -3602,10 +3602,10 @@ public class Manager
     {
         if (_planetOverlaySubtype == "None")
             return color;
-        
+
         if (cell.Group != null)
         {
-            if ((cell.Group.Population > 0) && 
+            if ((cell.Group.Population > 0) &&
                 cell.Group.Culture.GetActivity(_planetOverlaySubtype) is CellCulturalActivity activity)
             {
                 if (activity.Contribution > 0)
@@ -3645,10 +3645,10 @@ public class Manager
     {
         if (_planetOverlaySubtype == "None")
             return color;
-        
+
         if (cell.Group != null)
         {
-            if ((cell.Group.Population > 0) && 
+            if ((cell.Group.Population > 0) &&
                 cell.Group.Culture.GetSkill(_planetOverlaySubtype) is CellCulturalSkill skill)
             {
                 if (skill.Value >= 0.001)
@@ -3665,7 +3665,7 @@ public class Manager
     {
         if (cell.Group == null)
             return color;
-        
+
         if (_planetOverlaySubtype == "None")
             return GetUnincorporatedGroupColor();
 
@@ -3688,10 +3688,10 @@ public class Manager
     {
         if (_planetOverlaySubtype == "None")
             return color;
-        
+
         if (cell.Group != null)
         {
-            if ((cell.Group.Population > 0) && 
+            if ((cell.Group.Population > 0) &&
                 cell.Group.Culture.GetKnowledge(_planetOverlaySubtype) is CellCulturalKnowledge knowledge)
             {
                 float highestLimit = knowledge.GetHighestLimit();
@@ -3725,7 +3725,7 @@ public class Manager
             return GetUnincorporatedGroupColor();
 
         CulturalKnowledge knowledge = territory.Polity.Culture.GetKnowledge(_planetOverlaySubtype);
-        
+
         if (knowledge == null)
             return GetUnincorporatedGroupColor();
 
@@ -3747,7 +3747,7 @@ public class Manager
     {
         if (_planetOverlaySubtype == "None")
             return color;
-        
+
         if (cell.Group != null)
         {
             if ((cell.Group.Population > 0) && cell.Group.Culture.HasDiscovery(_planetOverlaySubtype))
@@ -3879,7 +3879,7 @@ public class Manager
             return color;
 
         Layer layer = Layer.Layers[_planetOverlaySubtype];
-        
+
         float normalizedValue = cell.GetLayerValue(_planetOverlaySubtype);
         normalizedValue = normalizedValue / layer.MaxPresentValue;
 
@@ -3956,7 +3956,7 @@ public class Manager
                     float startValue = SocialOrganizationKnowledge.InitialValue;
 
                     float knowledgeFactor = Mathf.Clamp01((knowledgeValue - startValue) / (minValue - startValue));
-                    
+
                     groupColor = (groupColor * knowledgeFactor) + densityColorSubOptimal * (1f - knowledgeFactor);
                 }
                 else
