@@ -407,7 +407,11 @@ public static class BiomeCellRegionBuilder
 
             Region region = TryGenerateRegion(cell, language);
 
-            if (region == null) testedCells.Add(cell);
+            if (region == null)
+            {
+                testedCells.Add(cell);
+                continue;
+            }
 
             testedCells.UnionWith(region.GetCells());
 
