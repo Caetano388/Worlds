@@ -172,7 +172,8 @@ public class CellSet
         CellSet cellSet,
         int maxMajorLength,
         int minMajorLength,
-        float maxScaleDiff)
+        float maxScaleDiff,
+        float minRectAreaPercent)
     {
         Debug.Log("Spliting set with area: " + cellSet.Area + ", width: " +
             cellSet.RectWidth + ", height: " + cellSet.RectHeight);
@@ -180,9 +181,14 @@ public class CellSet
         int majorLength = Mathf.Max(cellSet.RectHeight, cellSet.RectWidth);
         int minorLength = Mathf.Min(cellSet.RectHeight, cellSet.RectWidth);
         float scaleDiff = majorLength / (float)minorLength;
+        float rectAreaPercent = cellSet.Area / (float)cellSet.RectArea;
+        float percentFactor = Mathf.Max(0, rectAreaPercent - minRectAreaPercent) / (1 - minRectAreaPercent);
 
-        if ((majorLength <= minMajorLength) ||
-            ((majorLength <= maxMajorLength) && (scaleDiff < maxScaleDiff)))
+        float acceptableMajorLength = Mathf.Lerp(minMajorLength, maxMajorLength, percentFactor);
+
+        if ((majorLength <= acceptableMajorLength) ||
+            ((majorLength <= maxMajorLength) &&
+            (scaleDiff < maxScaleDiff)))
         {
             Debug.Log("Returning set with area: " + cellSet.Area);
 
@@ -210,13 +216,13 @@ public class CellSet
             Debug.Log("bottomCellSet area: " + bottomCellSet.Area);
 
             foreach (CellSet subset in SplitIntoSubsets(
-                topCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
+                topCellSet, maxMajorLength, minMajorLength, maxScaleDiff, minRectAreaPercent))
             {
                 yield return subset;
             }
 
             foreach (CellSet subset in SplitIntoSubsets(
-                bottomCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
+                bottomCellSet, maxMajorLength, minMajorLength, maxScaleDiff, minRectAreaPercent))
             {
                 yield return subset;
             }
@@ -243,16 +249,46 @@ public class CellSet
             Debug.Log("rightCellSet area: " + rightCellSet.Area);
 
             foreach (CellSet subset in SplitIntoSubsets(
-                leftCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
+                leftCellSet, maxMajorLength, minMajorLength, maxScaleDiff, minRectAreaPercent))
             {
                 yield return subset;
             }
 
             foreach (CellSet subset in SplitIntoSubsets(
-                rightCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
+                rightCellSet, maxMajorLength, minMajorLength, maxScaleDiff, minRectAreaPercent))
             {
                 yield return subset;
             }
         }
+    }
+
+    public TerrainCell GetMostCenteredCell()
+    {
+        int centerLongitude = 0, centerLatitude = 0;
+
+        foreach (TerrainCell cell in Cells)
+        {
+            centerLongitude += cell.Longitude;
+            centerLatitude += cell.Latitude;
+        }
+
+        centerLongitude /= Cells.Count;
+        centerLatitude /= Cells.Count;
+
+        TerrainCell closestCell = null;
+        int closestDistCenter = int.MaxValue;
+
+        foreach (TerrainCell cell in Cells)
+        {
+            int distCenter = Mathf.Abs(cell.Longitude - centerLongitude) + Mathf.Abs(cell.Latitude - centerLatitude);
+
+            if ((closestCell == null) || (distCenter < closestDistCenter))
+            {
+                closestDistCenter = distCenter;
+                closestCell = cell;
+            }
+        }
+
+        return closestCell;
     }
 }

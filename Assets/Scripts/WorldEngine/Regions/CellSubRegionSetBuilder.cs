@@ -9,9 +9,12 @@ public static class CellSubRegionSetBuilder
     private static int _rngOffset;
 
     public const int MaxMajorLength = 40;
-    public const int MinMajorLength = 15;
+    public const int MinMajorLength = 10;
     public const float MaxScaleDiff = 1.618f;
-    public const float HillinessEffect = 20;
+    public const float MinRectAreaPercent = 0.4f;
+
+    public const float HillinessEffect = 50;
+    public const float AccessibilityPower = 4;
 
     public static int DistanceComparison(TerrainCell a, TerrainCell b)
     {
@@ -36,10 +39,11 @@ public static class CellSubRegionSetBuilder
 
         // first subdivide the starting set and obtain a random starting point
         // from each subset
-        foreach (CellSet subset in
-            CellSet.SplitIntoSubsets(startingSet, MaxMajorLength, MinMajorLength, MaxScaleDiff))
+        foreach (CellSet subset in CellSet.SplitIntoSubsets(
+            startingSet, MaxMajorLength, MinMajorLength, MaxScaleDiff, MinRectAreaPercent))
         {
-            startCells.Add(subset.Cells.RandomSelect(GetRandomInt));
+            //startCells.Add(subset.Cells.RandomSelect(GetRandomInt));
+            startCells.Add(subset.GetMostCenteredCell());
         }
 
         HashSet<TerrainCell> addedCells = new HashSet<TerrainCell>();
@@ -81,7 +85,7 @@ public static class CellSubRegionSetBuilder
                 if (addedCells.Contains(nCell)) continue;
 
                 float accessibilityEffect = (cell.Accessibility + nCell.BaseAccessibility) / 2f;
-                accessibilityEffect = accessibilityEffect * accessibilityEffect;
+                accessibilityEffect = Mathf.Pow(accessibilityEffect, AccessibilityPower);
                 float accessibilityFactor = 1 / (0.001f + accessibilityEffect);
 
                 float avgHilliness = (cell.Hilliness + nCell.Hilliness) / 2f;
