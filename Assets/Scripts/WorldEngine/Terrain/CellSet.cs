@@ -5,6 +5,8 @@ using System.Linq;
 
 public class CellSet
 {
+    public World World;
+
     public HashSet<TerrainCell> Cells = new HashSet<TerrainCell>();
 
     public TerrainCell Top;
@@ -17,6 +19,8 @@ public class CellSet
     public int RectHeight = 0;
 
     public int Area = 0;
+
+    public bool WrapsAround = false;
 
     public bool NeedsUpdate = false;
 
@@ -32,6 +36,8 @@ public class CellSet
 
         if (!_initialized)
         {
+            World = cell.World;
+
             Top = cell;
             Bottom = cell;
             Left = cell;
@@ -41,16 +47,24 @@ public class CellSet
             return;
         }
 
-        if (((cell.Longitude - Left.Longitude) == -1) ||
-            ((cell.Longitude - Left.Longitude - Manager.WorldWidth) == -1))
+        if ((cell.Longitude - Left.Longitude) == -1)
         {
             Left = cell;
         }
+        else if ((cell.Longitude - Left.Longitude - Manager.WorldWidth) == -1)
+        {
+            Left = cell;
+            WrapsAround = true;
+        }
 
-        if (((cell.Longitude - Right.Longitude) == 1) ||
-            ((cell.Longitude - Right.Longitude + Manager.WorldWidth) == 1))
+        if ((cell.Longitude - Right.Longitude) == 1)
         {
             Right = cell;
+        }
+        else if ((cell.Longitude - Right.Longitude + Manager.WorldWidth) == 1)
+        {
+            Right = cell;
+            WrapsAround = true;
         }
 
         if ((cell.Latitude - Top.Latitude) == -1)
@@ -72,7 +86,7 @@ public class CellSet
         int right = Right.Longitude;
 
         // adjust for world wrap
-        if (right < left) right += Manager.WorldWidth;
+        if (WrapsAround) right += Manager.WorldWidth;
 
         RectHeight = bottom - top + 1;
         RectWidth = right - left + 1;
@@ -92,7 +106,7 @@ public class CellSet
         int right = Right.Longitude;
 
         // adjust for world wrap
-        if (right < left) right += Manager.WorldWidth;
+        if (WrapsAround) right += Manager.WorldWidth;
 
         if (!cell.Latitude.IsInsideRange(top, bottom)) return false;
 
@@ -111,6 +125,8 @@ public class CellSet
     {
         Cells.UnionWith(sourceSet.Cells);
 
+        WrapsAround |= sourceSet.WrapsAround;
+
         if (Top.Latitude > sourceSet.Top.Latitude)
         {
             Top = sourceSet.Top;
@@ -126,7 +142,7 @@ public class CellSet
         bool sourceSetRightOffsetDone = false;
 
         int rigthLongitude = Right.Longitude;
-        if (Left.Longitude >= Right.Longitude)
+        if (WrapsAround)
         {
             rigthLongitude += Manager.WorldWidth;
             offsetNeeded = true;
@@ -134,7 +150,7 @@ public class CellSet
         }
 
         int sourceSetRigthLongitude = sourceSet.Right.Longitude;
-        if (sourceSet.Left.Longitude >= sourceSet.Right.Longitude)
+        if (sourceSet.WrapsAround)
         {
             sourceSetRigthLongitude += Manager.WorldWidth;
             offsetNeeded = true;
@@ -262,25 +278,34 @@ public class CellSet
         }
     }
 
-    public TerrainCell GetMostCenteredCell()
+    public WorldPosition GetCentroid()
     {
-        int centerLongitude = 0, centerLatitude = 0;
+        int centroidLongitude = 0, centroidLatitude = 0;
 
         foreach (TerrainCell cell in Cells)
         {
-            centerLongitude += cell.Longitude;
-            centerLatitude += cell.Latitude;
+            centroidLongitude += cell.Longitude;
+            centroidLatitude += cell.Latitude;
         }
 
-        centerLongitude /= Cells.Count;
-        centerLatitude /= Cells.Count;
+        centroidLongitude /= Cells.Count;
+        centroidLatitude /= Cells.Count;
+
+        return new WorldPosition(centroidLongitude, centroidLatitude);
+    }
+
+    public TerrainCell GetMostCenteredCell()
+    {
+        WorldPosition centroid = GetCentroid();
 
         TerrainCell closestCell = null;
         int closestDistCenter = int.MaxValue;
 
         foreach (TerrainCell cell in Cells)
         {
-            int distCenter = Mathf.Abs(cell.Longitude - centerLongitude) + Mathf.Abs(cell.Latitude - centerLatitude);
+            int distCenter =
+                Mathf.Abs(cell.Longitude - centroid.Longitude) +
+                Mathf.Abs(cell.Latitude - centroid.Latitude);
 
             if ((closestCell == null) || (distCenter < closestDistCenter))
             {

@@ -9,7 +9,7 @@ public static class CellSubRegionSetBuilder
     private static int _rngOffset;
 
     public const int MaxMajorLength = 40;
-    public const int MinMajorLength = 10;
+    public const int MinMajorLength = 5;
     public const float MaxScaleDiff = 1.618f;
     public const float MinRectAreaPercent = 0.4f;
 
