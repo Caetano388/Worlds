@@ -5,7 +5,7 @@ using System.Linq;
 
 public class CellSet
 {
-    public HashSet<TerrainCell> Cells;
+    public HashSet<TerrainCell> Cells = new HashSet<TerrainCell>();
 
     public TerrainCell Top;
     public TerrainCell Bottom;
@@ -27,6 +27,8 @@ public class CellSet
         if (!Cells.Add(cell)) return; // cell already present
 
         Area++;
+
+        NeedsUpdate = true;
 
         if (!_initialized)
         {
@@ -60,8 +62,6 @@ public class CellSet
         {
             Bottom = cell;
         }
-
-        NeedsUpdate = true;
     }
 
     public void Update()
@@ -169,23 +169,33 @@ public class CellSet
     }
 
     public static IEnumerable<CellSet> SplitIntoSubsets(
-        CellSet set,
-        int maxSetSideLength)
+        CellSet cellSet,
+        int maxMajorLength,
+        int minMajorLength,
+        float maxScaleDiff)
     {
-        int maxLength = Mathf.Max(set.RectHeight, set.RectWidth);
+        Debug.Log("Spliting set with area: " + cellSet.Area + ", width: " +
+            cellSet.RectWidth + ", height: " + cellSet.RectHeight);
 
-        if (maxLength <= maxSetSideLength)
+        int majorLength = Mathf.Max(cellSet.RectHeight, cellSet.RectWidth);
+        int minorLength = Mathf.Min(cellSet.RectHeight, cellSet.RectWidth);
+        float scaleDiff = majorLength / (float)minorLength;
+
+        if ((majorLength <= minMajorLength) ||
+            ((majorLength <= maxMajorLength) && (scaleDiff < maxScaleDiff)))
         {
-            yield return set;
+            Debug.Log("Returning set with area: " + cellSet.Area);
+
+            yield return cellSet;
         }
-        else if (maxLength == set.RectHeight)
+        else if (majorLength == cellSet.RectHeight)
         {
-            int middleHeight = (set.Top.Latitude + set.Bottom.Latitude) / 2;
+            int middleHeight = (cellSet.Top.Latitude + cellSet.Bottom.Latitude) / 2;
 
             CellSet topCellSet = new CellSet();
             CellSet bottomCellSet = new CellSet();
 
-            foreach (TerrainCell cell in set.Cells)
+            foreach (TerrainCell cell in cellSet.Cells)
             {
                 if (cell.Latitude > middleHeight)
                     bottomCellSet.AddCell(cell);
@@ -196,24 +206,29 @@ public class CellSet
             topCellSet.Update();
             bottomCellSet.Update();
 
-            foreach (CellSet subset in SplitIntoSubsets(topCellSet, maxSetSideLength))
+            Debug.Log("topCellSet area: " + topCellSet.Area);
+            Debug.Log("bottomCellSet area: " + bottomCellSet.Area);
+
+            foreach (CellSet subset in SplitIntoSubsets(
+                topCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
             {
                 yield return subset;
             }
 
-            foreach (CellSet subset in SplitIntoSubsets(bottomCellSet, maxSetSideLength))
+            foreach (CellSet subset in SplitIntoSubsets(
+                bottomCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
             {
                 yield return subset;
             }
         }
         else
         {
-            int middleWidth = (set.Left.Longitude + set.Right.Longitude) / 2;
+            int middleWidth = (cellSet.Left.Longitude + cellSet.Right.Longitude) / 2;
 
             CellSet leftCellSet = new CellSet();
             CellSet rightCellSet = new CellSet();
 
-            foreach (TerrainCell cell in set.Cells)
+            foreach (TerrainCell cell in cellSet.Cells)
             {
                 if (cell.Longitude > middleWidth)
                     rightCellSet.AddCell(cell);
@@ -224,12 +239,17 @@ public class CellSet
             leftCellSet.Update();
             rightCellSet.Update();
 
-            foreach (CellSet subset in SplitIntoSubsets(leftCellSet, maxSetSideLength))
+            Debug.Log("leftCellSet area: " + leftCellSet.Area);
+            Debug.Log("rightCellSet area: " + rightCellSet.Area);
+
+            foreach (CellSet subset in SplitIntoSubsets(
+                leftCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
             {
                 yield return subset;
             }
 
-            foreach (CellSet subset in SplitIntoSubsets(rightCellSet, maxSetSideLength))
+            foreach (CellSet subset in SplitIntoSubsets(
+                rightCellSet, maxMajorLength, minMajorLength, maxScaleDiff))
             {
                 yield return subset;
             }
