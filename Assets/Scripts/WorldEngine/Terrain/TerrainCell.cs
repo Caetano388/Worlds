@@ -95,6 +95,9 @@ public class TerrainCell
     public bool DrainageDone = true;
     public bool TerrainAlteredBeforeDrainageRegen = false;
 
+    public float DistanceBuffer;
+    public object ObjectBuffer;
+
     public float FlowingWater
     {
         get
